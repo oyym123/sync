@@ -42,8 +42,11 @@ http://101.37.174.19:876/
 
 
 四、操作步骤：
+ 
       1、安装 PHP swoole 扩展 、 rabbitmq 和 redis
+
       2、修改主配置文件  src/Config.php
+
       3、点击启动
 
 
