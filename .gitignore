@@ -1,0 +1,4 @@
+src/Config.php
+config/
+log
+jsonDatabase.json
