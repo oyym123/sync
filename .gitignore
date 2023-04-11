@@ -1,4 +1,4 @@
-src/Config.php
-config/
-log
-jsonDatabase.json
+example/config
+example/log
+/vendor
+.idea

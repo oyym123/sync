@@ -1,17 +1,17 @@
 <?php
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
 use Exception;
-use Pupilcp\Config;
-use Pupilcp\Library\AmqpLib;
-use Pupilcp\Library\RedisLib;
+use AsyncCenter\Config;
+use AsyncCenter\Library\AmqpLib;
+use AsyncCenter\Library\RedisLib;
 
 /**
  * 错误重试
  * Class Retry
- * @package Pupilcp\Service
+ * @package AsyncCenter\Service
  */
 class Retry
 {
@@ -22,31 +22,34 @@ class Retry
      */
     public function start()
     {
-        $info = json_decode(file_get_contents(Config::JSON_DATABASE_PATH), true);
-        $redis = RedisLib::getInstance(Config::RETRY_INFO['redis'], false);
+        $info = json_decode(file_get_contents(Config::info('JSON_DATABASE_PATH')), true);
+        $redis = RedisLib::getInstance(Config::info('RETRY_INFO')['redis'], false);
         $retryArr = [];
         //扫描所有任务
         foreach ($info as $item) {
             //获取当前一小时的异常
             $prefixKey = 'SMC_RETRY_' . $item['mq_master_name'] . '_' . date('Y-m-d_H');
             $keyTime = $redis->ttl($prefixKey);
+
             if ($keyTime == -2) {  //表示已过期，或者不存在
                 continue;
             } else {
                 $resData = $redis->get($prefixKey);
+
                 $res = json_decode($resData, true);
+
                 $retryType = new RetryType();
                 $newRes = [];
                 if (is_array($res) && !empty($res)) {
-                    $ampq = AmqpLib::getInstance($item['mq_host'], $item['mq_port'], $item['mq_user'], $item['mq_pass'], $item['mq_vhost'], $item['mq_exchange'], $item['timeout'] ?? null);
+                    $ampq = AmqpLib::getInstanceNew($item);
                     foreach ($res as $re) {
-                        if (abs(time() - $re['end_time']) < 12000 && $re['status'] == 1) {   //小于2分钟之内的则重新推入队列
+                        if (abs(time() - $re['end_time']) < 120 && $re['status'] == 1) {   //小于2分钟之内的则重新推入队列
                             $re['status'] = 0;
                             if (!empty($re['data'])) {
                                 $oldData = [];
                                 if (is_array($re['data'])) {
                                     $oldData = $re['data'];
-                                    $re['data'] = json_encode($re['data']);
+                                    $re['data'] = json_encode($re['data'], JSON_PRETTY_PRINT);
                                 }
                                 $timesRes = $redis->get(Utils::retryTimesKey($re['data']));
                                 if (!empty($timesRes)) {

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
 
 class RetryType

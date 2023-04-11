@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/src/BloomFilter/BloomFilter.php" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/BloomFilter/BloomFilterHash.php" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/BloomFilter/BloomFilterRedis.php" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/BloomFilter/BloomFilterService.php" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/Log" charset="GBK" />
+  </component>
+</project>

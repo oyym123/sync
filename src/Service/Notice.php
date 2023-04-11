@@ -2,9 +2,9 @@
 
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
-use Pupilcp\Smc;
+use AsyncCenter\Smc;
 
 class Notice
 {

@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="../static/css/normalize.min.css">
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
+<style>
+    .form-update {
+        color: greenyellow
+    }
+</style>
 <body>
 
 <div class="app-container">
@@ -50,43 +55,43 @@
         <br/>
         <br/>
         <?php
-        $action = new Action();
+        $action = new \AsyncCenter\Action();
         $info = $action->getOne();
         ?>
-        <form action="../action.php?action=update_submit" method="post">
-            　　　　　　　　　　　　　　　　　　　<span style="color: greenyellow"> <span style="color: red"> * </span>任务备注名称：</span>
+        <form action="../action?action=update_submit" method="post" class="form-update">
+            <span>  <span style="color: red"> * </span>任务备注名称：</span>
             <input class="input-bar" placeholder="【产品】更新sku信息" name="name" value="<?= $info['name'] ?>" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　　　<span style="color: greenyellow"> <span style="color: red;"> * </span>唯一英文名：</span>
+            <span>  <span style="color: red;"> * </span>唯一英文名：</span>
             <input class="input-bar" placeholder="QUEUE_DCM_PRODUCT_ADD" name="mq_master_name" readonly
                    value="<?= $info['mq_master_name'] ?>" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　 <span style="color: greenyellow"> <span style="color: red;"> * </span>交换机名称：</span>
+            <span>  <span style="color: red;"> * </span>交换机名称：</span>
             <input class="input-bar" name="mq_exchange" value="<?= $info['mq_exchange'] ?>" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　<span style="color: greenyellow"> <span style="color: red;"> * </span>队列名称：</span>
+            <span>  <span style="color: red;"> * </span>队列名称：</span>
             <input class="input-bar" name="queue_name" value="<?= $info['queue_name'] ?>" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　<span style="color: greenyellow"> <span style="color: red;"> * </span>路由名称：</span>
+            <span>  <span style="color: red;"> * </span>路由名称：</span>
             <input class="input-bar" name="route_key" value="<?= $info['route_key'] ?>" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　<span style="color: greenyellow"> <span style="color: red;"> * </span>回调方法：</span>
-            <input style="width: 550px;position: relative;"
-                   placeholder="product/SyncDocs/callBackTest" class="input-bar"
-                   value="<?= $info['call_back_func'] ?>"
-                   name="call_back_func"
-                   type="text">
+            <span>  <span style="color: red;"> * </span>回调方法：</span>
+            <input
+                    placeholder="product/SyncDocs/callBackTest" class="input-bar"
+                    value="<?= $info['call_back_func'] ?>"
+                    name="call_back_func"
+                    type="text">
             <br/>
             <br/>
-            　　　　　　　　　<span style="color: greenyellow"> prefetchCount：</span>
+            <span>  prefetchCount：</span>
             <input class="input-bar" value="<?= $info['prefetch_count'] ?>" name="prefetch_count" type="text">
             <br/>
-            <div class="filter-button-wrapper" style="right: 38%;bottom: 12%;">
+            <div class="filter-button-wrapper" style="right: 38%;bottom: 32%;">
                 <div class="filter-menu active">
                     <label style="color: greenyellow">最小进程数</label>
                     <select name="min_consumer">
@@ -121,46 +126,96 @@
                         }
                         ?>
                     </select>
+                    <label style="color: greenyellow">是否记录回调日志</label>
+                    <select name="is_log">
+                        <?php
+                        foreach ($action::getLogStatus() as $key => $value) {
+                            if ($key == $info['is_log']) {
+                                echo '<option selected value="' . $key . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $key . '">' . $value . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
+
+                    <label style="color: greenyellow">是否去重-相同的参数只执行一次</label>
+                    <select name="is_repeat">
+                        <?php
+                        foreach ($action::getRepeatCleanStatus() as $key => $value) {
+                            if ($key == $info['is_repeat']) {
+                                echo '<option selected value="' . $key . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $key . '">' . $value . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
+                    <label style="color: greenyellow">是否统计消费数量</label>
+                    <select name="is_count">
+                        <?php
+                        foreach ($action::getIsCountStatus() as $key => $value) {
+                            if ($key == $info['is_count']) {
+                                echo '<option selected value="' . $key . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $key . '">' . $value . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
+                    <label style="color: greenyellow">是否使用队列参数</label>
+                    <select name="is_queue">
+                        <?php
+                        foreach ($action::getIsArgQueue() as $key => $value) {
+                            if ($key == $info['is_queue']) {
+                                echo '<option selected value="' . $key . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $key . '">' . $value . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
                 </div>
             </div>
             <br/>
-            　　　　　　<span style="color: greenyellow">redis_password：</span>
+            <span> redis_password：</span>
             <input class="input-bar" value="<?= $info['redis_password'] ?>" name="redis_password" type="text">
             <br/>
             <br/>
-            　　　<span style="color: greenyellow">redis_database：</span>
+            <span> redis_database：</span>
             <input class="input-bar" value="<?= $info['redis_database'] ?>" name="redis_database" type="text">
             <br/>
             <br/>
-            　　　　　　　　 <span style="color: greenyellow">redis_port：</span>
+            <span> redis_port：</span>
             <input class="input-bar" value="<?= $info['redis_port'] ?>" name="redis_port" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　 <span style="color: greenyellow">redis_host：</span>
+            <span> redis_host：</span>
             <input class="input-bar" value="<?= $info['redis_host'] ?>" name="redis_host" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　 <span style="color: greenyellow">mq_host：</span>
+            <span> mq_host：</span>
             <input class="input-bar" value="<?= $info['mq_host'] ?>" name="mq_host" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　 <span style="color: greenyellow">mq_port：</span>
+            <span> mq_port：</span>
             <input class="input-bar" value="<?= $info['mq_port'] ?>" name="mq_port" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　　<span style="color: greenyellow">mq_user：</span>
+            <span> mq_user：</span>
             <input class="input-bar" value="<?= $info['mq_user'] ?>" name="mq_user" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　　　　 <span style="color: greenyellow">mq_pass：</span>
+            <span> mq_pass：</span>
             <input class="input-bar" value="<?= $info['mq_pass'] ?>" name="mq_pass" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　　　　　　　<span style="color: greenyellow">mq_vhost：</span>
+            <span> mq_vhost：</span>
             <input class="input-bar" value="<?= $info['mq_vhost'] ?>" name="mq_vhost" type="text">
             <br/>
             <br/>
-            　　　　　　　　　　　　　　　　
+            <br/>
+
             <button type="submit" class="app-content-headerButton" style="width: 60%;">保存配置 【保存完后需要点击重启，才会监听并且消费队列】
             </button>
             <br/>

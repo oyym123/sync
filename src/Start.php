@@ -1,29 +1,21 @@
 <?php
 
-use Pupilcp\Config;
+namespace AsyncCenter;
 
 class Start
 {
-    public function __construct()
-    {
-        require_once "./autoload.php";
-    }
-
     /**
      * 开始smc服务
      * 常用命令  start|restart|stop|status|help
      * @param $argv
      * @param bool $daemon
      */
-    public function run($argv, $daemon = true)
+    public function run($config, $command, $daemon = true)
     {
-        $config = $argv[1];
-        $command = $argv[2];
-        $file = __DIR__ . "/config/" . $config . ".php";
+        $file = Config::info('CONFIG_PATH') . $config . ".php";
         $globalConfig = include_once $file;
-
         try {
-            $app = new \Pupilcp\App($globalConfig);
+            $app = new App($globalConfig);
             $app->run($command, $daemon);
         } catch (\Throwable $e) {
             //处理异常情况 TODO
@@ -35,4 +27,4 @@ class Start
     }
 }
 
-(new Start())->run($argv);
+

@@ -2,7 +2,7 @@
 
 
 
-namespace Pupilcp\Interfaces;
+namespace AsyncCenter\Interfaces;
 
 interface MessageDriver
 {

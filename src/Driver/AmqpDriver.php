@@ -2,12 +2,12 @@
 
 
 
-namespace Pupilcp\Driver;
+namespace AsyncCenter\Driver;
 
-use Pupilcp\Interfaces\MessageDriver;
-use Pupilcp\Library\AmqpLib;
-use Pupilcp\Log\Logger;
-use Pupilcp\Smc;
+use AsyncCenter\Interfaces\MessageDriver;
+use AsyncCenter\Library\AmqpLib;
+use AsyncCenter\Log\Logger;
+use AsyncCenter\Smc;
 
 class AmqpDriver implements MessageDriver
 {

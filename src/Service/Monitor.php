@@ -2,10 +2,10 @@
 
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
-use Pupilcp\Log\Logger;
-use Pupilcp\Smc;
+use AsyncCenter\Log\Logger;
+use AsyncCenter\Smc;
 
 class Monitor
 {

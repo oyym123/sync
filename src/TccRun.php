@@ -1,13 +1,9 @@
 <?php
 
-use Pupilcp\Config;
-use Pupilcp\Library\AmqpLib;
-use Pupilcp\Service\Utils;
+namespace AsyncCenter;
 
-include_once "action.php";
-include_once "src/Config.php";
-include_once "src/Library/AmqpLib.php";
-include_once "src/Service/Utils.php";
+use AsyncCenter\Library\AmqpLib;
+use AsyncCenter\Service\Utils;
 
 class TccRun
 {
@@ -18,9 +14,13 @@ class TccRun
      */
     public function route()
     {
+        if (!isset($_GET['action'])) {
+            exit('no action!');
+        }
+
         //日志访问
         switch ($_GET['action']) {
-            case 'batchTest':                      //批量全局事务准备 判断服务是否正常
+            case 'batchTest':                //批量全局事务准备 判断服务是否正常
                 $this->batchTest();
                 break;
             case 'test':                      //全局事务准备 判断服务是否正常
@@ -62,6 +62,8 @@ class TccRun
             case 'newGid':            //生成唯一id
                 exit(json_encode(['gid' => md5(time() . uniqid())]));
                 break;
+            default :
+                return http_response_code(404);
         }
     }
 
@@ -84,7 +86,7 @@ class TccRun
      */
     public function test()
     {
-        $svcUrl = Config::TCC_HTTP_HOST;
+        $svcUrl = Config::info('BASE_HTTP_HOST') . '/tccTest?action=';
 
         //当try接口返回的json中 含有 FAILURE 字符 或者http状态码 != 200 将会自动终止执行 ，并且记录 try 的错误信息，发送cancel请求
         /**
@@ -139,10 +141,9 @@ class TccRun
             ],
             'retry' => 1                //1=需要错误重试 0=不需要错误重试
         ];
-
-        $item = (new Action())->getOne(1); //默认1号 TCC 事务
-        $ampq = AmqpLib::getInstance($item['mq_host'], $item['mq_port'], $item['mq_user'], $item['mq_pass'], $item['mq_vhost'], $item['mq_exchange'], $item['timeout'] ?? null);
-        $ampq->publishNew(Config::MQ_EXCHANGE_DCM_TCC, Config::QUEUE_DCM_TCC, json_encode($data));
+        $ampq = AmqpLib::getInstanceNew((new Action())->getOne(1)); //默认1号 TCC 事务
+        $ampq->publishNew(Config::info('MQ_EXCHANGE_DCM_TCC'), Config::info('QUEUE_DCM_TCC'), json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES));
+        echo '数据推送成功！' . PHP_EOL . '<pre>' . json_encode($data, JSON_PRETTY_PRINT + JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES);
     }
 
     /************************************   1.0   *******************************/
@@ -226,7 +227,6 @@ class TccRun
     public function TransInConfirmServer2($res, $isTry = 0)
     {
         $res = $res['json'];
-
         $code = 1;
         $msg = '校验成功';
         if ($code < 0) {
@@ -241,7 +241,7 @@ class TccRun
             if ($code > 0) {
                 exit(json_encode([
                     'tcc_code' => 1,
-                    Config::TCC_HTTP_HOST . 'TransInTry3' => [
+                    Config::info('BASE_HTTP_HOST') . '/tccTest?action=TransInTry3' => [
                         'bank_3_in' => 10,    //二号银行 转给 三号银行 10元 ，将给三号银行接口的参数返回，用于后续请求三号银行的try接口
                         'bank_2_out' => 10,
                     ],
@@ -279,7 +279,7 @@ class TccRun
 
     public function TransInConfirmServer3($res, $isTry = 0)
     {
-        $res = $res['json'];
+        $res = $res['json'] ?? '';
         $code = 1;
         $msg = '校验成功';
 
@@ -294,7 +294,7 @@ class TccRun
             if ($code > 0) {
                 exit(json_encode([
                     'tcc_code' => 1,
-                    Config::TCC_HTTP_HOST . 'TransInTry4' => [
+                    Config::info('BASE_HTTP_HOST') . '/tccTest?action=TransInTry4' => [
                         'bank_4_in' => 2,    //三号银行 转给 四号银行转 2元 ，将给四号银行接口的参数返回，用于后续请求四号银行的try接口
                         'bank_3_out' => 2,
                     ],
@@ -371,13 +371,8 @@ class TccRun
 
     public function TransInCancel4()
     {
-        $name = '三号银行';
+        $name = '四号银行';
         Utils::writeLog([$name . '收到 Cancel', $_POST], 'Tcc/' . date('Y_m_d') . '_TCC_API.log');
         exit(json_encode(['tcc_code' => 1]));
     }
-}
-
-try {
-    (new TccRun())->route();
-} catch (Exception $e) {
 }

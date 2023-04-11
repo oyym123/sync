@@ -1,0 +1,28 @@
+{
+  "name": "oyym/async-center",
+  "description": "async manage code decoupling",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "oyym",
+      "email": "1052016884@qq.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1.0",
+    "ext-json": "*",
+    "ext-iconv": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "AsyncCenter\\": "src/",
+      "AsyncCenter\\Example\\": "example/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "AsyncCenter\\Example\\": "example/"
+    }
+  }
+}

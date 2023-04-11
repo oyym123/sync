@@ -1,12 +1,12 @@
 <?php
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
-use Pupilcp\App;
-use Pupilcp\Library\AmqpLib;
-use Pupilcp\Log\Logger;
-use Pupilcp\Smc;
+use AsyncCenter\App;
+use AsyncCenter\Library\AmqpLib;
+use AsyncCenter\Log\Logger;
+use AsyncCenter\Smc;
 
 class Process
 {
@@ -223,24 +223,35 @@ class Process
                 $queue = new \AMQPQueue($channel);
                 $queue->setName($queueConf['queueName'] ?? null);
                 $queue->bind(Smc::getConfig()['connection']['exchange'], $queueConf['routeKey'] ?? null);
-                $baseApplication = '\Pupilcp\Base\BaseApplication';
+                $baseApplication = '\AsyncCenter\Base\BaseApplication';
                 if (isset(Smc::getGlobalConfig()['global']['baseApplication']) && class_exists(Smc::getGlobalConfig()['global']['baseApplication'])) {
                     $baseApplication = Smc::getGlobalConfig()['global']['baseApplication'];
                 }
                 $baseApp = new $baseApplication();
                 $startTime = time();
                 $queue->consume(function (\AMQPEnvelope $envelope, \AMQPQueue $queue) use ($baseApp, $queueConf, &$startTime, $worker) {
-                    $argumentSecond = $argumentFirst = '';
-                    if (isset($queueConf['callback'][2]) && !empty($queueConf['callback'][2])) {
-                        $argumentFirst = $queueConf['callback'][2];
-                    }
-                    if (isset($queueConf['callback'][3]) && !empty($queueConf['callback'][3])) {
-                        $argumentSecond = $queueConf['callback'][3];
-                    }
-                    $baseApp->run(['command' => $queueConf['callback'][0], 'action' => $queueConf['callback'][1],
-                        'argument_first' => $argumentFirst, 'argument_second' => $argumentSecond, 'msg' => $envelope->getBody(),
-                        'master_process_name' => $this->masterProcessName]);
+                    $callbackFunc = array_filter(explode(' ', $queueConf['callback']));
+                    $argumentFirst = $callbackFunc[1] ?? '';
+                    $argumentSecond = $callbackFunc[2] ?? '';
                     $queue->ack($envelope->getDeliveryTag());
+
+                    $cleanRepeat = Smc::getGlobalConfig()['global']['cleanRepeat'] ?? 20;     //是否判断消息重复  10=清除 20=不清除
+                    $logFlag = Smc::getGlobalConfig()['global']['logFlag'] ?? 10;             //是否记录回调日志  10=记录 20=不记录
+                    $isCount = Smc::getGlobalConfig()['global']['isCount'] ?? 10;             //是否统计消息数量  10=统计 20=不统计
+                    $isQueue = Smc::getGlobalConfig()['global']['isQueue'] ?? 10;             //是否使用队列参数  10=使用 20=不使用
+
+                    $baseApp->run([
+                        'command' => $callbackFunc[0],
+                        'action' => $queueConf['callback'][1],
+                        'argument_first' => $argumentFirst,
+                        'argument_second' => $argumentSecond,
+                        'msg' => $envelope->getBody(),
+                        'master_process_name' => $this->masterProcessName,
+                        'cleanRepeat' => $cleanRepeat,
+                        'logFlag' => $logFlag,
+                        'isCount' => $isCount,
+                        'isQueue' => $isQueue
+                    ]);
                     //子进程执行时间超过设定时间，退出并重启
                     if (isset(Smc::getGlobalConfig()['global']['childProcessMaxExecTime']) && Smc::getGlobalConfig()['global']['childProcessMaxExecTime'] && (time() - $startTime > (int)Smc::getGlobalConfig()['global']['childProcessMaxExecTime'])) {
                         $startTime = time();

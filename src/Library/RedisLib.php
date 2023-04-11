@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Pupilcp\Library;
+namespace AsyncCenter\Library;
 
 /**
  * redis操作类
@@ -222,6 +222,50 @@ class RedisLib
     public function ttl($key)
     {
         return $this->redis->ttl($key);
+    }
+
+    /**
+     * 向列表中推送 （左进）
+     * @param mixed $key
+     *
+     * @return
+     */
+    public function lPush($key, $value)
+    {
+        return $this->redis->lPush($key, $value);
+    }
+
+
+    /**
+     * 向列表中推送 （右进）
+     * @param mixed $key
+     *
+     * @return
+     */
+    public function rPush($key, $value)
+    {
+        return $this->redis->rPush($key, $value);
+    }
+
+
+    /**
+     * 右出
+     * @param mixed $key
+     * @return
+     */
+    public function rPop($key)
+    {
+        return $this->redis->rPop($key);
+    }
+
+    /**
+     * 左出
+     * @param mixed $key
+     * @return
+     */
+    public function lPop($key)
+    {
+        return $this->redis->lPop($key);
     }
 
     /**

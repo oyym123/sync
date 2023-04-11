@@ -1,11 +1,7 @@
 <?php
-
-include_once "action.php";
-include_once "src/Config.php";
-include_once "src/Service/TccService.php";
-
-use Pupilcp\Service\TccService;
-use Pupilcp\Service\Utils;
+namespace AsyncCenter;
+use AsyncCenter\Service\TccService;
+use AsyncCenter\Service\Utils;
 
 class Tcc
 {
@@ -32,8 +28,4 @@ class Tcc
                 break;
         }
     }
-}
-
-if (isset($_GET['action'])) {
-    (new Tcc())->route();
 }

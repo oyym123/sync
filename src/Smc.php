@@ -1,12 +1,12 @@
 <?php
 
 
-namespace Pupilcp;
+namespace AsyncCenter;
 
-use Pupilcp\Driver\AmqpDriver;
-use Pupilcp\Driver\RedisDriver;
-use Pupilcp\Library\RedisLib;
-use Pupilcp\Log\Logger;
+use AsyncCenter\Driver\AmqpDriver;
+use AsyncCenter\Driver\RedisDriver;
+use AsyncCenter\Library\RedisLib;
+use AsyncCenter\Log\Logger;
 
 class Smc
 {

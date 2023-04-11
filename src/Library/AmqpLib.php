@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Pupilcp\Library;
+namespace AsyncCenter\Library;
 
 class AmqpLib
 {
@@ -70,7 +70,7 @@ class AmqpLib
      *
      * @throws
      */
-    private function __construct($host, $port, $user, $pass, $vhost, $exchange, $timeout = 5, $heartbeat = 10)
+    private function __construct($host, $port, $user, $pass, $vhost, $exchange, $timeout = 60, $heartbeat = 10)
     {
         $this->host = $host;
         $this->port = $port;
@@ -99,6 +99,22 @@ class AmqpLib
             }
         }
     }
+
+    public static function getInstanceNew($conf)
+    {
+        if (self::$instance instanceof self) {
+            return self::$instance;
+        }
+
+        $instance = new self($conf['mq_host'], $conf['mq_port'], $conf['mq_user'], $conf['mq_pass'], $conf['mq_vhost'], $conf['mq_exchange'], $conf['timeout'] ?? null);
+        if (!self::$ampqConnection->connect()) {
+            throw new \Exception("Cannot connect to the broker!\n");
+        }
+        self::$instance = $instance;
+
+        return self::$instance;
+    }
+
 
     public static function getInstance($host, $port, $user, $password, $vhost, $exchange, $timeout)
     {

@@ -1,3 +1,9 @@
+<?php
+
+use AsyncCenter\Config;
+use AsyncCenter\Library\RedisLib;
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,9 +15,7 @@
 <body>
 
 <div class="app-container">
-
     <div class="sidebar">
-
         <div class="sidebar-header">
             <div class="app-icon">
                 <svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
@@ -69,18 +73,6 @@
                 </a>
             </li>
             <li class="sidebar-list-item active">
-                <a href="?action=systemErrorLog" target="_blank">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                         class="feather feather-shopping-bag">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <path d="M16 10a4 4 0 0 1-8 0"></path>
-                    </svg>
-                    <span>回调执行错误日志</span>
-                </a>
-            </li>
-            <li class="sidebar-list-item active">
                 <a href="?action=smcActionLog" target="_blank">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -110,12 +102,24 @@
                         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
                     </svg>
                 </button>
-                <a href="../action.php?action=add" target="_blank">
+                <a href="../action?action=add" target="_blank">
                     <button class="app-content-headerButton">新增配置</button>
                 </a>
             </div>
             <label>
+                <strong style="color: forestgreen">任务名称</strong>
                 <input class="search-bar" placeholder="Search..." type="text" name="search" style="right: 80%">
+                &nbsp;&nbsp;
+                <strong style="color: forestgreen">起始时间</strong>
+                <input class="search-bar" placeholder="开始日期" type="text" name="date_start"
+                       value="<?= isset($_GET['date_start']) ? $_GET['date_start'] : date('Y-m-d', strtotime("-1 day")) ?>"
+                       style="width: 8rem;background-color: rgb(16,24,39);color: green">
+                &nbsp;
+                <strong style="color: forestgreen">结束时间</strong>
+                <input class="search-bar" placeholder="结束日期" type="text" name="date_end"
+                       value="<?= isset($_GET['date_end']) ? $_GET['date_end'] : date('Y-m-d') ?>"
+                       style="color: green;width: 8rem;background-color: rgb(16,24,39)">&nbsp;&nbsp;
+                <button class="search-submit app-content-headerButton" style="width: 6%;">点击搜索</button>
             </label>
             <div class="app-content-actions" style="right: 50%;position: relative;">
                 <div class="app-content-actions-wrapper">
@@ -152,14 +156,15 @@
 
             </div>
 
-            <div class="products-area-wrapper tableView" style="width: 230%;position: relative;">
+            <div class="products-area-wrapper tableView" style="width: 230%;position: relative;word-wrap:break-word">
                 <div class="products-header">
                     <?php
                     $title = [
                         '序号' => 1.8,
                         '状态' => 1,
                         '任务名称' => 5.7,
-                        '监听日志' => 2,
+                        '执行数量' => 2.5,
+                        '监听日志' => 2.3,
                         '回调日志' => 2,
                         '成功日志' => 2,
                         '失败日志' => 2,
@@ -191,7 +196,18 @@
                 </div>
 
                 <?php
-                foreach ((new Action())->allInfo() ?? [] as $datum) {
+                $styleWidth = array_values($title);
+                foreach ((new \AsyncCenter\Action())->allInfo() ?? [] as $datum) {
+
+                if (isset($_GET['keywords']) && !empty($_GET['keywords']) && strpos($datum['name'], $_GET['keywords']) === false) {
+                    continue;
+                }
+
+                $datum['nums'] = 0;
+                if (isset($_GET['date_start']) && !empty($_GET['date_start']) && !empty($_GET['date_end'])) {
+                    $datum['nums'] = \AsyncCenter\Service\Utils::numsCount($datum['mq_master_name'], $_GET['date_start'], $_GET['date_end']);
+                }
+
                 $funcArr = explode('/', $datum['call_back_func']);
                 $lastFunc = explode(' ', $funcArr[count($funcArr) - 1])[0];
                 $listen = '?action=listenLog&id=' . $datum['id'];
@@ -222,6 +238,10 @@
                 <div class="product-cell" style="width: 5.7%">
                     <div class="cell-label"> 任务名称:</div>
                     <strong><?php echo $datum['name'] ?? '' ?></strong>
+                </div>
+                <div class="product-cell" style="width:2%">
+                    <div class="cell-label"> 执行数量:</div>
+                    <strong><?php echo $datum['nums'] ?? '' ?></strong>
                 </div>
                 <div class="product-cell" style="width: 2%;"><span class="cell-label">  监听日志:</span>
                     <a href="<?= $listen ?>" target="_blank">
@@ -289,7 +309,7 @@
                 <div class="product-cell" style="width: 5%"><span
                             class="cell-label">  创建时间:</span><?= $datum['created_at'] ?? '' ?> </div>
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作1:</span>
-                    <a href="../action.php?action=update&id=<?= $datum['id'] ?>" target="_blank">
+                    <a href="../action?action=update&id=<?= $datum['id'] ?>" target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: royalblue;width: 3.8rem;">修改
                         </button>
@@ -297,7 +317,7 @@
                 </div>
 
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作2:</span>
-                    <a href="../action.php?id=<?= $datum['id'] ?>&action=restart" target="_blank">
+                    <a href="../action?id=<?= $datum['id'] ?>&action=restart" target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: orange;width: 3.8rem;">重启
                         </button>
@@ -305,7 +325,7 @@
                 </div>
 
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作3:</span>
-                    <a href="../action.php?id=<?= $datum['id'] ?>&action=start" target="_blank">
+                    <a href="../action?id=<?= $datum['id'] ?>&action=start" target="_blank">
                         <button type="button" class="app-content-headerButton"
                                 style="background-color: green;width: 3.8rem;">
                             启动
@@ -313,7 +333,7 @@
                     </a>
                 </div>
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作4:</span>
-                    <a href="../action.php?id=<?= $datum['id'] ?>&action=stop" target="_blank">
+                    <a href="../action?id=<?= $datum['id'] ?>&action=stop" target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: red;width: 3.8rem;">
                             暂停
@@ -334,7 +354,7 @@
                     <strong><?= $datum['name'] ?></strong>
                 </div>
                 <div class="product-cell" style="width: 10%"><span
-                            class="cell-label">  重试时间:</span><?= implode('、', (new Action())->getRetry($datum['retry'])) ?>
+                            class="cell-label">  重试时间:</span><?= implode('、', (new \AsyncCenter\Action())->getRetry($datum['retry'])) ?>
                 </div>
             </div>
             <?php
@@ -349,8 +369,19 @@
         $('.search-bar').bind('keyup', function (event) {
             if (event.keyCode == "13") {
                 //回车执行查询
-                window.location.href = "/systems/smc?keywords=" + $("input[name='search']").val();
+                window.location.href = "/list?keywords=" + $("input[name='search']").val()
+                    + "&date_start=" + $("input[name='date_start']").val()
+                    + "&date_end=" + $("input[name='date_end']").val()
+                ;
             }
+        });
+
+        //点击绑定时间
+        $('.search-submit').click('keyup', function (event) {
+            window.location.href = "/list?keywords=" + $("input[name='search']").val()
+                + "&date_start=" + $("input[name='date_start']").val()
+                + "&date_end=" + $("input[name='date_end']").val()
+            ;
         });
 
         $("#grid_view").click(function () {

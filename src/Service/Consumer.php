@@ -2,9 +2,9 @@
 
 
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
-use Pupilcp\Interfaces\MessageDriver;
+use AsyncCenter\Interfaces\MessageDriver;
 
 class Consumer
 {

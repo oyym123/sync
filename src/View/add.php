@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="../static/css/normalize.min.css">
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
+<style>
+    .form-add {
+        color: greenyellow
+    }
+</style>
 <body>
 
 <div class="app-container">
@@ -45,46 +50,48 @@
     </div>
     <div class="app-content" style="height: 200%">
         <?php
-        $redisConfig = \Pupilcp\Config::REDIS_CONFIG;
-        $mqConfig = \Pupilcp\Config::MQ_CONFIG;
-        $action = new Action();
+        $redisConfig = \AsyncCenter\Config::info('REDIS_CONFIG');
+        $mqConfig = \AsyncCenter\Config::info('MQ_CONFIG');
+        $action = new \AsyncCenter\Action();
         ?>
         <div class="app-content-header">
             <h1 class="app-content-headerText">新增配置</h1>
         </div>
         <br/>
         <br/>
-        <form action="../action.php?action=add_submit" method="post">
-            <span style="color: greenyellow"> <span style="color: red"> * </span>任务备注名称：</span>
+        <form action="../action?action=add_submit" method="post" class="form-add">
+            <span> <span style="color: red"> * </span>任务备注名称：</span>
             <input class="input-bar" placeholder="【产品】更新sku信息" name="name" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> <span style="color: red;"> * </span>全局唯一英文任务名：</span>
+            <span> <span style="color: red;"> * </span>唯一英文任务名：</span>
             <input class="input-bar" placeholder="Search..." name="mq_master_name" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> <span style="color: red;"> * </span>交换机名称：</span>
+            <span> <span style="color: red;"> * </span>交换机名称：</span>
             <input class="input-bar" placeholder="" name="mq_exchange" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> <span style="color: red;"> * </span>队列名称：</span>
+            <span> <span style="color: red;"> * </span>队列名称：</span>
             <input class="input-bar" placeholder="" name="queue_name" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> <span style="color: red;"> * </span>路由名称：</span>
+            <span> <span style="color: red;"> * </span>路由名称：</span>
             <input class="input-bar" placeholder="" name="route_key" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> <span style="color: red;"> * </span>回调方法【支持cli或者http】：</span>
-            <input style="width: 550px;position: relative;" class="input-bar"
+            <span> <span style="color: red;"> * </span>回调方法：</span>
+            <input class="input-bar"
                    placeholder="/usr/bin/php /demo/index.php abc 或者 http://demo.com/abc"
                    name="call_back_func"
                    type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow"> prefetchCount【预取数量】：</span>
-            <input class="input-bar" placeholder="" name="prefetch_count" value="10" type="text">
-            <div class="filter-button-wrapper" style="right: 38%;bottom: 12%;">
+
+            <h5 style="color: cornsilk">以下皆为默认配置 - 可自行修改</h5>
+            <hr style="width: 37%;position: relative;right: 30%">
+
+            <div class="filter-button-wrapper" style="right: 35%;bottom: 30%;">
                 <div class="filter-menu active">
                     <label style="color: greenyellow">最小进程数</label>
                     <select name="min_consumer">
@@ -111,49 +118,90 @@
                         }
                         ?>
                     </select>
+                    <label style="color: greenyellow">是否记录回调日志</label>
+                    <select name="is_log">
+                        <?php
+                        foreach ($action::getLogStatus() as $k => $value) {
+                            echo '<option value="' . $k . '">' . $value . '</option>';
+                        }
+                        ?>
+                    </select>
+
+                    <label style="color: greenyellow">是否去重-相同的参数只执行一次</label>
+                    <select name="is_repeat">
+                        <?php
+                        foreach ($action::getRepeatCleanStatus() as $k => $value) {
+                            echo '<option value="' . $k . '">' . $value . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <label style="color: greenyellow">是否统计消费数量</label>
+                    <select name="is_count">
+                        <?php
+                        foreach ($action::getIsCountStatus() as $k => $value) {
+                            echo '<option value="' . $k . '">' . $value . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <label style="color: greenyellow">是否使用队列参数</label>
+                    <select name="is_queue">
+                        <?php
+                        foreach ($action::getIsArgQueue() as $k => $value) {
+                            echo '<option value="' . $k . '">' . $value . '</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
             </div>
-
             <br/>
-            <span style="color: greenyellow">redis_password：</span>
-            <input class="input-bar" placeholder="" name="redis_password" value="<?= $redisConfig['password'] ?? '' ?>"
-                   type="text">
-            <br/>
-            <br/>
-            <span style="color: greenyellow">redis_database：</span>
-            <input class="input-bar" placeholder="" name="redis_database" value="<?= $redisConfig['database'] ?? '' ?>"
-                   type="text">
-            <br/>
-            <br/>
-            <span style="color: greenyellow">redis_port：</span>
-            <input class="input-bar" placeholder="" name="redis_port" value="<?= $redisConfig['port'] ?? '' ?>"
-                   type="text">
-            <br/>
-            <br/>
-            <span style="color: greenyellow">redis_host：</span>
+            <span> redis_host：</span>
             <input class="input-bar" placeholder="" name="redis_host" value="<?= $redisConfig['host'] ?? '' ?>"
                    type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow">mq_host：</span>
+            <span> redis_password：</span>
+            <input class="input-bar" placeholder="" name="redis_password" value="<?= $redisConfig['password'] ?? '' ?>"
+                   type="text">
+            <br/>
+            <br/>
+            <span> redis_database：</span>
+            <input class="input-bar" placeholder="" name="redis_database" value="<?= $redisConfig['database'] ?? '' ?>"
+                   type="text">
+            <br/>
+            <br/>
+            <span> redis_port：</span>
+            <input class="input-bar" placeholder="" name="redis_port" value="<?= $redisConfig['port'] ?? '' ?>"
+                   type="text">
+
+            <br/>
+            <br/>
+
+            <br/>
+            <span> mq_host：</span>
             <input class="input-bar" placeholder="" name="mq_host" value="<?= $mqConfig['host'] ?? '' ?>" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow">mq_port：</span>
-            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['port'] ?? '' ?>" type="text">
+            <span> mq_vhost：</span>
+            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['vhost'] ?? '' ?>" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow">mq_user：</span>
+
+            <span> mq_user：</span>
             <input class="input-bar" placeholder="" name="mq_user" value="<?= $mqConfig['login'] ?? '' ?>" type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow">mq_pass：</span>
+            <span> mq_pass：</span>
             <input class="input-bar" placeholder="" name="mq_pass" value="<?= $mqConfig['password'] ?? '' ?>"
                    type="text">
             <br/>
             <br/>
-            <span style="color: greenyellow">mq_vhost：</span>
-            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['vhost'] ?? '' ?>" type="text">
+            <span> mq_port：</span>
+            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['port'] ?? '' ?>" type="text">
+            <br/>
+            <br/>
+            <span> prefetchCount：</span>
+            <input class="input-bar" placeholder="" name="prefetch_count" value="10" type="text">
+            <br/>
             <br/>
             <br/>
             <button type="submit" class="app-content-headerButton" style="width: 55%;">保存配置</button>

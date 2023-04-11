@@ -45,18 +45,18 @@
     </div>
     <div class="app-content" style="height: 200%">
         <?php
-        $redisConfig = \Pupilcp\Config::REDIS_CONFIG;
-        $mqConfig = \Pupilcp\Config::MQ_CONFIG;
-        $action = new Action();
+        $redisConfig = \AsyncCenter\Config::info('REDIS_CONFIG');
+        $mqConfig = \AsyncCenter\Config::info('MQ_CONFIG');
+        $action = new \AsyncCenter\Action();
         ?>
         <div class="app-content-header">
             <h1 class="app-content-headerText">新增配置</h1>
         </div>
         <br/>
         <br/>
-        <form action="../action.php" method="get">
+        <form action="../action" method="get">
             <span style="color: greenyellow"> <span style="color: red"> * </span>查看日期：</span>
-            <input class="input-bar" placeholder="2022-02-16" name="tcc_date" type="text" value="<?= date('Y_m_d');?>">
+            <input class="input-bar" placeholder="2022-02-16" name="tcc_date" type="text" value="<?= date('Y_m_d'); ?>">
             <input class="input-bar" name="action" type="hidden" value="tccLog">
             <br/>
             <br/>

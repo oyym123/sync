@@ -1,5 +1,11 @@
 <?php
 
+namespace AsyncCenter;
+
+use AsyncCenter\Library\RedisLib;
+use AsyncCenter\Service\RetryType;
+use AsyncCenter\Service\Utils;
+
 /**
  * 功能：
  * 1、队列监听消费界面数据展示
@@ -8,15 +14,6 @@
  * 4、日志查询
  * PS:所有数据都以json形式存储在单个文件中
  */
-
-use Pupilcp\Config;
-use Pupilcp\Service\RetryType;
-use Pupilcp\Service\Utils;
-
-include_once "src/Config.php";
-include_once "src/Service/Utils.php";
-include_once "src/Service/RetryType.php";
-
 class Action
 {
     /**
@@ -32,13 +29,13 @@ class Action
         //日志访问
         switch ($_GET['action']) {
             case 'tcc_view':        //Tcc日志展示
-                include_once "view/tcc.php";
+                include_once "View/tccView.php";
                 break;
             case 'add':             //新增展示
-                include_once "view/add.php";
+                include_once "View/add.php";
                 break;
             case 'update':          //修改展示
-                include_once "view/update.php";
+                include_once "View/update.php";
                 break;
             case 'update_submit':   //提交修改
                 $this->update();
@@ -67,13 +64,78 @@ class Action
             case 'smcActionLog':     //操作日志
                 $this->smcActionLog();
                 break;
-            case 'tccLog':          //tcc日志
+            case 'tccLog':              //tcc日志
                 $this->tccLog();
                 break;
             case 'systemRetryLog':       //重试日志
                 $this->systemRetryLog();
                 break;
         }
+    }
+
+    const CALLBACK_LOG_YES = 10;   //记录回调日志
+    const CALLBACK_LOG_NO = 20;    //不记录回调日志
+
+    const REPEAT_CLEAN_YES = 10;    //清除重复信息
+    const REPEAT_CLEAN_NO = 20;     //不清除重复信息
+
+    const IS_COUNT_YES = 10;       //统计数据
+    const IS_COUNT_NO = 20;        //不统计数据
+
+    const IS_QUEUE_YES = 10;       //使用队列参数
+    const IS_QUEUE_NO = 20;        //不使用队列参数
+
+    /**
+     * @param string $key
+     * @return int|string|string[]
+     */
+    public static function getLogStatus($key = 'all')
+    {
+        $data = [
+            self::CALLBACK_LOG_YES => '记录',
+            self::CALLBACK_LOG_NO => '不记录',
+        ];
+        return $key === 'all' ? $data : ($data[$key] ?? self::CALLBACK_LOG_YES);
+    }
+
+    /**
+     * @param string $key
+     * @return int|string|string[]
+     */
+    public static function getRepeatCleanStatus($key = 'all')
+    {
+        $data = [
+            self::REPEAT_CLEAN_NO => '不去重',
+            self::REPEAT_CLEAN_YES => '去重',
+        ];
+        return $key === 'all' ? $data : ($data[$key] ?? self::REPEAT_CLEAN_YES);
+    }
+
+    /**
+     * @param string $key
+     * @return int|string|string[]
+     */
+    public static function getIsCountStatus($key = 'all')
+    {
+        $data = [
+            self::IS_COUNT_YES => '统计',
+            self::IS_COUNT_NO => '不统计',
+        ];
+        return $key === 'all' ? $data : ($data[$key] ?? self::IS_COUNT_YES);
+    }
+
+
+    /**
+     * @param string $key
+     * @return int|string|string[]
+     */
+    public static function getIsArgQueue($key = 'all')
+    {
+        $data = [
+            self::IS_QUEUE_YES => '使用',
+            self::IS_QUEUE_NO => '不使用',
+        ];
+        return $key === 'all' ? $data : ($data[$key] ?? self::IS_COUNT_YES);
     }
 
     /**
@@ -83,14 +145,16 @@ class Action
      */
     public function writeSave($data, $id = 0)
     {
-        if (file_get_contents('lock.php')) {
+        $redis = RedisLib::getInstance(Config::info('REDIS_CONFIG'), false);
+        $lockKey = 'async_center_db_lock';
+        if ($redis->exists($lockKey)) {
             exit("有其他用户正在操作，请重试！");
         }
-        file_put_contents('lock.php', 1);
+        $redis->set($lockKey, 1);
         $info = $this->allInfo();
         if ($id) { //更新
             $saveData = [];
-            foreach ($this->allInfo() as $item) {
+            foreach ($info as $item) {
                 if ($item['id'] == $id) {
                     foreach ($data as $key => $datum) {
                         $item[$key] = $datum;
@@ -105,14 +169,14 @@ class Action
             $data['id'] = array_pop($info)['id'] + 1;
             $data['updated_at'] = date('Y-m-d H:i:s');
             $data['created_at'] = date('Y-m-d H:i:s');
-            $saveData = array_merge($this->allInfo(), [$data]);
+            $saveData = array_merge($info, [$data]);
             $id = $data['id'];
         }
-        $saveData = json_encode($saveData, JSON_PRETTY_PRINT);
-        $saveData = str_replace('\/', '/', $saveData);
-        file_put_contents(Config::JSON_DATABASE_PATH, $saveData);
+
+        $saveData = json_encode($saveData, JSON_PRETTY_PRINT + JSON_UNESCAPED_UNICODE);
+        file_put_contents(Config::info('JSON_DATABASE_PATH'), str_replace('\/', '/', $saveData));
         $this->createConfig($id);
-        file_put_contents('lock.php', '');
+        $redis->del($lockKey);
         Header("Location: /");
     }
 
@@ -132,7 +196,7 @@ class Action
      */
     public function allInfo()
     {
-        $res = file_get_contents(Config::JSON_DATABASE_PATH);
+        $res = file_get_contents(Config::info('JSON_DATABASE_PATH'));
         return $res ? json_decode($res, true) : [];
     }
 
@@ -144,7 +208,7 @@ class Action
     public function getOne($id = 0)
     {
         $id = $id ?: $_GET['id'];
-        $res = json_decode(file_get_contents(Config::JSON_DATABASE_PATH), true) ?: [];
+        $res = json_decode(file_get_contents(Config::info('JSON_DATABASE_PATH')), true) ?: [];
         $info = [];
         foreach ($res as $re) {
             if ($re['id'] == $id) {
@@ -179,7 +243,7 @@ class Action
     {
         $flagStr = '';
         foreach ($data as $key => $value) {
-            if (empty($value) && $value != 0) {
+            if (empty($value) && $value !== 0 && $key != 'retry') {
                 $flagStr .= $key . ',';
             }
         }
@@ -202,6 +266,7 @@ class Action
     {
         $data = $this->getOne($id);
         $template = file_get_contents("config/template_config.log");
+
         foreach ($data as $key => $datum) {
             if ($key == 'call_back_func') {
                 $datum = "['$datum']";
@@ -210,7 +275,7 @@ class Action
                 $str = '[' . PHP_EOL;
                 $retry = (new RetryType())->retry($datum);
                 foreach ($retry as $k => $item) {
-                    $str .= $k . ' => ' . $item . ',' . PHP_EOL;
+                    $str .= "\t\t" . $k . ' => ' . $item . ',' . PHP_EOL;
                 }
                 $datum = $str . ']';
             }
@@ -247,34 +312,32 @@ class Action
 
     public function smcAction()
     {
-        include_once "src/Config.php";
-        include_once "src/Service/Utils.php";
-        $fileName = ' smc_' . $this->getOne()['mq_master_name'];
+        $fileName = 'smc_' . $this->getOne()['mq_master_name'];
 
         //启动
         if ($_GET['action'] == 'start') {
-            $exec = Config::SMC_ACTION_PHP_ENV . ' start.php ' . $fileName . ' start  >> log/SMC_ACTION.log';
+            $exec = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' start  >> log/SMC_ACTION.log';
             system($exec);
-            Utils::writeLog($fileName . '启动操作', 'SMC_ACTION.log');
+            Utils::writeLog($fileName . ' 启动操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 1], $_GET['id']);
         }
 
         //禁用
         if ($_GET['action'] == 'stop') {
-            $exec = Config::SMC_ACTION_PHP_ENV . ' start.php  ' . $fileName . ' stop  >> log/SMC_ACTION.log';
+            $exec = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' stop  >> log/SMC_ACTION.log';
             system($exec);
-            Utils::writeLog($fileName . '暂停操作', 'SMC_ACTION.log');
+            Utils::writeLog($fileName . ' 暂停操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 0], $_GET['id']);
         }
 
         //重启
         if ($_GET['action'] == 'restart') {
-            $exec1 = Config::SMC_ACTION_PHP_ENV . ' start.php  ' . $fileName . ' stop  >> log/SMC_ACTION.log';
-            $exec2 = Config::SMC_ACTION_PHP_ENV . ' start.php  ' . $fileName . ' start  >> log/SMC_ACTION.log';
+            $exec1 = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' stop  >> log/SMC_ACTION.log';
+            $exec2 = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' start  >> log/SMC_ACTION.log';
             system($exec1);
             sleep(2);
             system($exec2);
-            Utils::writeLog($fileName . '重启操作', 'SMC_ACTION.log');
+            Utils::writeLog($fileName . ' 重启操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 1], $_GET['id']);
         }
     }
@@ -286,7 +349,7 @@ class Action
 
     public function tccLog()
     {
-        Utils::showLog('log/Tcc/' . $_GET['tcc_date'] . '_TCC_API.log', 'Tcc日志');
+        Utils::showLog(Config::info('LOG_PATH') . 'Tcc/' . $_GET['tcc_date'] . '_TCC_API.log', 'Tcc日志');
     }
 
     public function smcActionLog()
@@ -310,9 +373,10 @@ class Action
     {
         $info = $this->getOne();
         $name = $info['name'];
-        $num = $_GET['num'] ?? 10000;
+        $num = $_GET['num'] ?? 200;
         $isArr = $_GET['arr'] ?? 0;
         $refresh = $_GET['r'] ?? 0;
+        $keywords = $_GET['k'] ?? 0;
         $title = '';
         $dir = 'success';
         if ($_GET['action'] == 'successLog') {
@@ -336,24 +400,31 @@ class Action
         }
 
         $title = '<b style="color: orange">' . $title . '</b>';
-        $res = file_get_contents($fileName);
-        $res = mb_substr($res, -$num);
+        $res = Utils::fileLastLines($fileName, $num);
         echo '<div style="color: #009900;background-color: black;">';
-        echo "<h2 style='color: wheat'>【" . $name . "】{$title}（只展示最后{$num}字符）更多请&nbsp;↑  &nbsp;&nbsp;url后加&num=100000，转换数组 加 &arr=1 | 自动刷新加： &r=1</h2>";
+        echo "<h2 style='color: wheat'>【" . $name . "】{$title}（只展示最后{$num}行）更多请&nbsp;↑  &nbsp;&nbsp;url后加&num=100000，字符搜索 加 &k=关键词 ，转换数组 加 &arr=1 | 自动刷新加： &r=1</h2>";
         $arr = array_filter(explode(PHP_EOL, $res));
         $res = [];
-
+        $keywordsInfo = [];
         foreach ($arr as $key => $item) {
             $data = json_decode($item, true);
             $data['data'] = $isArr ? $data['data'] : (json_encode($data['data'], JSON_UNESCAPED_UNICODE) ?: $data['data']);
+
+            if (!empty($keywords)) {
+                if (strpos($item, $keywords) !== false) {
+                    $keywordsInfo[] = $data['data'];
+                }
+            }
             $res[] = $data;
         }
 
+        if (!empty($keywords)) {
+            $res = $keywordsInfo;
+        }
         if ($refresh) {
             echo '<meta http-equiv="refresh" content="' . $refresh . '">';
         }
-
-        $res = array_reverse($res);
+//        $res = array_reverse($res);
         echo '<pre>';
         print_r($res);
         echo '</div>';

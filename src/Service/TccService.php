@@ -1,10 +1,10 @@
 <?php
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
 use Exception;
-use Pupilcp\Config;
-use Pupilcp\Library\RedisLib;
+use AsyncCenter\Config;
+use AsyncCenter\Library\RedisLib;
 use Throwable;
 
 /**
@@ -20,9 +20,8 @@ class TccService
 
     public function __construct($dtmUrl = '', $gid = '')
     {
-        require_once "./autoload.php";
-        $httpHost = Config::BASE_HTTP_HOST;
-        $this->dtm = $dtmUrl ?: $httpHost . '/tcc.php?action=';
+        $httpHost = Config::info('BASE_HTTP_HOST');
+        $this->dtm = $dtmUrl ?: $httpHost . '/tcc?action=';
         $this->gid = $gid;
         $this->idGen = new IdGenerator();
     }
@@ -51,9 +50,13 @@ class TccService
                 $getContents = $tcc->callBranch($req, $info['urls']['try'], $info['urls']['confirm'], $info['urls']['cancel'], $info['title']);
             } catch (Throwable $e) {
                 Utils::writeLog($info['title'] . '  Error: ' . $e->getMessage(), 'Tcc/' . date('Y_m_d') . '_TCC_API.log');
+                $da = json_decode($e->getMessage(), true);
+                if (!empty($da)) {
+                    $msg = $da;
+                }
                 $errorInfo[] = [
                     'name' => $info['title'],
-                    'msg' => json_decode($e->getMessage(), true)
+                    'msg' => $msg
                 ];
             }
 
@@ -61,7 +64,6 @@ class TccService
             if (isset($infos[$k + 1]) && isset($getContents[$infos[$k + 1]['urls']['try']])) {
                 $req = $getContents[$infos[$k + 1]['urls']['try']];
             }
-
             echo $tcc->gid . PHP_EOL;
         }
 
@@ -78,7 +80,11 @@ class TccService
                 'json' => $tbody,
                 'error' => $errorInfo
             ]);
-            $errorStr = ['info' => '事务ID：' . $tcc->gid . ' 执行失败！【' . $name . '】', 'error' => $errorInfo];
+
+            $errorStr = [
+                'info' => '事务ID：' . $tcc->gid . ' 执行失败！【' . $name . '】',
+                'error' => $errorInfo
+            ];
             return [-1, $errorStr];
         }
     }
@@ -118,7 +124,7 @@ class TccService
             'branch_id' => $branchId,
             'branch_type' => 'try',
             'try_url' => $tryUrl,
-            'data' => json_encode($body, JSON_UNESCAPED_UNICODE)
+            'data' => $body
         ];
 
         list($getStatusCode, $getContents, $errInfo) = $this->idGen->curlPost($tryUrl, [
@@ -126,7 +132,7 @@ class TccService
             'query' => $query
         ]);
 
-        Utils::writeLog([$name . ' 发送TRY', 'request' => ['json' => $body, 'query' => $query], 'response' => $getContents], 'Tcc/' . date('Y_m_d') . '_TCC_API.log');
+        Utils::writeLog([$name . ' 发送TRY', 'request' => ['json' => $body, 'query' => $query], 'response' => json_decode($getContents, true)], 'Tcc/' . date('Y_m_d') . '_TCC_API.log');
         $this->idGen->checkStatus($getStatusCode, $errInfo);
         return $this->idGen->checkFailure($getContents, $getContents);
     }
@@ -138,21 +144,21 @@ class TccService
         $_POST['json']['created_at'] = date('Y-m-d H:i:s');
         if (isset($_POST['json']) && isset($_POST['json']['gid'])) {
             //查询该调用方法 对应的任务
-            $redis = RedisLib::getInstance(Config::TCC_INFO['redis'], false);
+            $redis = RedisLib::getInstance(Config::info('TCC_INFO')['redis'], false);
             $res = $redis->get(self::TCC_PREFIX . $_POST['json']['gid']);
             if (!empty($res)) {
                 $data = array_merge(json_decode($res, true), [$_POST['json']]);
             } else {
                 $data = [$_POST['json']];
             }
-            $redis->set(self::TCC_PREFIX . $_POST['json']['gid'], json_encode($data), Config::TCC_INFO['info_max_day']);
+            $redis->set(self::TCC_PREFIX . $_POST['json']['gid'], json_encode($data), Config::info('TCC_INFO')['info_max_day']);
         }
         Utils::writeLog($_POST, 'TCC.log');
     }
 
     /**
      *  异常回滚
-     *  http://192.168.33.210:88/systems/tcc/abort
+     *  http://192.168.31.78:998/systems/tcc/abort
      * @param array $post
      */
     public function abort($post = [])
@@ -160,21 +166,21 @@ class TccService
         $data = $post ?: $_POST;
         $gid = $data['json']['gid'] ?? 0;
         //查询出当前的数据进行提交
-        $updateInfo = $cancelId = [];
-        $redis = RedisLib::getInstance(Config::TCC_INFO['redis'], false);
+        $updateInfo = [];
+        $redis = RedisLib::getInstance(Config::info('TCC_INFO')['redis'], false);
         $res = $redis->get(self::TCC_PREFIX . $gid);
-        $res = json_decode($res, true);
-        foreach ($res as $value) {
-            $cancelId[$value['branch_id']] = $value['cancel_url'];
-        }
 
-        foreach ($cancelId as $id => $url) {
+        $res = json_decode($res, true);
+
+        foreach ($res as $value) {
+            $id = $value['branch_id'];
+            $url = $value['cancel_url'];
             if (strpos($url, 'http://') !== false || strpos($url, 'https://') !== false) {
                 list($getStatusCode) = $this->idGen->curlPost($url, $data);
                 if ($getStatusCode == 200) {
-                    Utils::writeLog($id . ' ---- 发送取消成功' . json_encode($data['error']), 'TCC.log');
+                    Utils::writeLog([$value['title'] . '-- 发送取消成功', $data['error']], 'TCC.log');
                 } else {
-                    Utils::writeLog($id . ' ---- 发送取消失败！' . json_encode($data['error']), 'TCC.log');
+                    Utils::writeLog([$value['title'] . '-- 发送取消失败！HttpCode:' . $getStatusCode, $data['error']], 'TCC.log');
                 }
             }
 
@@ -189,7 +195,7 @@ class TccService
 
         if (!empty($updateInfo)) {
             $data = Utils::redisJsonUpdate($updateInfo, $res);
-            $redis->set(self::TCC_PREFIX . $gid, json_encode($data), Config::TCC_INFO['info_max_day']);
+            $redis->set(self::TCC_PREFIX . $gid, json_encode($data), Config::info('TCC_INFO')['info_max_day']);
         }
     }
 
@@ -199,29 +205,27 @@ class TccService
         $gid = $_POST['json']['gid'] ?? 0;
 
         //查询出当前的数据进行提交
-        $redis = RedisLib::getInstance(Config::TCC_INFO['redis'], false);
+        $redis = RedisLib::getInstance(Config::info('TCC_INFO')['redis'], false);
         $res = $redis->get(self::TCC_PREFIX . $gid);
 
         if (!empty($res)) {
             $res = json_decode($res, true);
-            $titleInfo = $dataInfo = $updateInfo = $confirmId = [];
+            $updateInfo = $confirmId = [];
             foreach ($res as $value) {
-                $confirmId[$value['branch_id']] = $value['confirm_url'];
-                $dataInfo[$value['branch_id']] = $value['data'];
-                $titleInfo[$value['branch_id']] = $value['title'];
-            }
-
-            foreach ($confirmId as $id => $url) {
-                $confirmStatus = $this->idGen->curlPost($url, ['json' => json_decode($dataInfo[$id], true)]);
-                Utils::writeLog([$titleInfo[$id] . '发送SUBMIT', 'request' => json_decode($dataInfo[$id], true),
+                $confirmStatus = $this->idGen->curlPost($value['confirm_url'], ['json' => json_decode($value['data'], true)]);
+                $da = json_decode($confirmStatus[1], true);
+                if (!empty($da)) {
+                    $confirmStatus[1] = $da;
+                }
+                Utils::writeLog([$value['title'] . '发送SUBMIT', 'request' => json_decode($value['data'], true),
                     'response' => $confirmStatus], 'Tcc/' . date('Y_m_d') . '_TCC_API.log');
                 $updateInfo[] = [
-                    'branch_id' => $id,
+                    'branch_id' => $value['branch_id'],
                     'confirm_status' => $confirmStatus
                 ];
             }
             $data = Utils::redisJsonUpdate($updateInfo, $res);
-            $redis->set(self::TCC_PREFIX . $gid, json_encode($data), Config::TCC_INFO['info_max_day']);
+            $redis->set(self::TCC_PREFIX . $gid, json_encode($data, JSON_UNESCAPED_UNICODE), Config::info('TCC_INFO')['info_max_day']);
         }
     }
 

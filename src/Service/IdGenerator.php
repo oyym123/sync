@@ -1,6 +1,6 @@
 <?php
 
-namespace Pupilcp\Service;
+namespace AsyncCenter\Service;
 
 use Exception;
 use InvalidArgumentException;

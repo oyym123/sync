@@ -2,10 +2,10 @@
 
 
 
-namespace Pupilcp;
+namespace AsyncCenter;
 
-use Pupilcp\Log\Logger;
-use Pupilcp\Service\Process;
+use AsyncCenter\Log\Logger;
+use AsyncCenter\Service\Process;
 
 class App
 {

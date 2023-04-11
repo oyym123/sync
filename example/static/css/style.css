@@ -279,6 +279,8 @@ body {
     width: 100%;
     max-width: 520px;
     transition: 0.2s;
+    left: 23rem;
+    position: fixed;
 }
 
 .search-bar {
