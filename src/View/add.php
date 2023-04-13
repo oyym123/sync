@@ -25,7 +25,7 @@
         </div>
         <ul class="sidebar-list">
             <li class="sidebar-list-item">
-                <a href="/">
+                <a href="/async<?= $_GET['beautyRoute'] ?? '' ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                          class="feather feather-home">
@@ -59,7 +59,7 @@
         </div>
         <br/>
         <br/>
-        <form action="../action?action=add_submit" method="post" class="form-add">
+        <form action="../async<?= $_GET['beautyRoute'] ?? '' ?>?action=add_submit" method="post" class="form-add">
             <span> <span style="color: red"> * </span>任务备注名称：</span>
             <input class="input-bar" placeholder="【产品】更新sku信息" name="name" type="text">
             <br/>
@@ -178,25 +178,25 @@
 
             <br/>
             <span> mq_host：</span>
-            <input class="input-bar" placeholder="" name="mq_host" value="<?= $mqConfig['host'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_host" value="<?= $mqConfig['mq_host'] ?? '' ?>" type="text">
             <br/>
             <br/>
             <span> mq_vhost：</span>
-            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['vhost'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['mq_vhost'] ?? '' ?>" type="text">
             <br/>
             <br/>
 
             <span> mq_user：</span>
-            <input class="input-bar" placeholder="" name="mq_user" value="<?= $mqConfig['login'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_user" value="<?= $mqConfig['mq_user'] ?? '' ?>" type="text">
             <br/>
             <br/>
             <span> mq_pass：</span>
-            <input class="input-bar" placeholder="" name="mq_pass" value="<?= $mqConfig['password'] ?? '' ?>"
+            <input class="input-bar" placeholder="" name="mq_pass" value="<?= $mqConfig['mq_pass'] ?? '' ?>"
                    type="text">
             <br/>
             <br/>
             <span> mq_port：</span>
-            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['port'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['mq_port'] ?? '' ?>" type="text">
             <br/>
             <br/>
             <span> prefetchCount：</span>

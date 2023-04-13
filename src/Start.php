@@ -12,7 +12,7 @@ class Start
      */
     public function run($config, $command, $daemon = true)
     {
-        $file = Config::info('CONFIG_PATH') . $config . ".php";
+        $file = Config::info('CONFIG_PATH') . 'smc_' . $config . ".php";
         $globalConfig = include_once $file;
         try {
             $app = new App($globalConfig);

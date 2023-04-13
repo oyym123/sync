@@ -1,0 +1,30 @@
+[
+  {
+    "name": "tcc分布式处理",
+    "mq_master_name": "QUEUE_DCM_TCC",
+    "mq_exchange": "MQ_EXCHANGE_DCM_TCC",
+    "route_key": "dcm_tcc",
+    "queue_name": "dcm_tcc",
+    "call_back_func": "artisan price-change",
+    "prefetch_count": "10",
+    "min_consumer": "2",
+    "max_consumer": "2",
+    "retry": "0",
+    "redis_password": "foo#09213",
+    "redis_database": "1",
+    "redis_port": "7001",
+    "redis_host": "192.168.71.244",
+    "mq_host": "192.168.71.244",
+    "mq_port": "5672",
+    "mq_user": "devdrm",
+    "mq_pass": "foo#09213",
+    "mq_vhost": "/",
+    "status": 1,
+    "id": "1",
+    "updated_at": "2023-04-13 13:53:22",
+    "is_log": "10",
+    "is_repeat": "20",
+    "is_count": "10",
+    "is_queue": "10"
+  }
+]

@@ -25,7 +25,7 @@
         </div>
         <ul class="sidebar-list">
             <li class="sidebar-list-item">
-                <a href="/">
+                <a href="/async<?= $_GET['beautyRoute'] ?? '' ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                          class="feather feather-home">
@@ -58,7 +58,7 @@
         $action = new \AsyncCenter\Action();
         $info = $action->getOne();
         ?>
-        <form action="../action?action=update_submit" method="post" class="form-update">
+        <form action="../async<?= $_GET['beautyRoute'] ?? '' ?>?action=update_submit" method="post" class="form-update">
             <span>  <span style="color: red"> * </span>任务备注名称：</span>
             <input class="input-bar" placeholder="【产品】更新sku信息" name="name" value="<?= $info['name'] ?>" type="text">
             <br/>

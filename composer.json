@@ -12,7 +12,8 @@
   "require": {
     "php": ">=7.1.0",
     "ext-json": "*",
-    "ext-iconv": "*"
+    "ext-iconv": "*",
+    "ext-amqp": "*"
   },
   "autoload": {
     "psr-4": {

@@ -230,9 +230,9 @@ class Process
                 $baseApp = new $baseApplication();
                 $startTime = time();
                 $queue->consume(function (\AMQPEnvelope $envelope, \AMQPQueue $queue) use ($baseApp, $queueConf, &$startTime, $worker) {
-                    $callbackFunc = array_filter(explode(' ', $queueConf['callback']));
-                    $argumentFirst = $callbackFunc[1] ?? '';
-                    $argumentSecond = $callbackFunc[2] ?? '';
+//                    $callbackFunc = array_filter(explode(' ', $queueConf['callback']));
+//                    $argumentFirst = $callbackFunc[1] ?? '';
+//                    $argumentSecond = $callbackFunc[2] ?? '';
                     $queue->ack($envelope->getDeliveryTag());
 
                     $cleanRepeat = Smc::getGlobalConfig()['global']['cleanRepeat'] ?? 20;     //是否判断消息重复  10=清除 20=不清除
@@ -241,10 +241,9 @@ class Process
                     $isQueue = Smc::getGlobalConfig()['global']['isQueue'] ?? 10;             //是否使用队列参数  10=使用 20=不使用
 
                     $baseApp->run([
-                        'command' => $callbackFunc[0],
-                        'action' => $queueConf['callback'][1],
-                        'argument_first' => $argumentFirst,
-                        'argument_second' => $argumentSecond,
+                        'command' => $queueConf['callback'][0],
+                        'argument_first' => $argumentFirst ?? '',
+                        'argument_second' => $argumentSecond ?? '',
                         'msg' => $envelope->getBody(),
                         'master_process_name' => $this->masterProcessName,
                         'cleanRepeat' => $cleanRepeat,

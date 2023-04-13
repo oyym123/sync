@@ -14,8 +14,6 @@ class TccTask
     public function callbackTask($params)
     {
         $res = Utils::getQueueData($params);
-        $sourceRequest['master'] = 'QUEUE_DCM_TCC';
-        $sourceRequest['data'] = json_encode(json_decode($res, true), JSON_PRETTY_PRINT);
         if (strpos($res, 'urls_data') === false) {
             exit('数据异常！');
         }
@@ -23,9 +21,9 @@ class TccTask
         list($code, $msg) = (new TccService())->tcc($info['urls_data'], $info['request']);
         if ($code < 0) {
             //进入重试状态
-            Utils::asyncErrorLog($msg, $sourceRequest['master'], $sourceRequest);
+            Utils::asyncErrorLog($msg, 'QUEUE_DCM_TCC', $res);
         } else {
-            Utils::asyncSuccessLog($msg, $sourceRequest['master']);
+            Utils::asyncSuccessLog($msg, 'QUEUE_DCM_TCC');
         }
     }
 }

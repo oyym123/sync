@@ -3,7 +3,9 @@
 
 namespace AsyncCenter\Service;
 
+use AsyncCenter\Action;
 use AsyncCenter\Base\BaseApplication;
+use AsyncCenter\Library\AmqpLib;
 
 class Test
 {
@@ -47,5 +49,18 @@ class Test
             'isCount' => 10,
             'isQueue' => 10,
         ]);
+    }
+
+    public function sendMq()
+    {
+        //根据配置文件创建队列
+        $item = (new Action())->getOne(1);
+        AmqpLib::setMqInfo($item);
+
+        //发送消息
+        AmqpLib::sendMsg('QUEUE_DCM_TCC', 'TCC_MSG', '1');
+
+        //发送广播信息
+        AmqpLib::sendMsgFanout('TCC_MSG_FANOUT', '123');
     }
 }

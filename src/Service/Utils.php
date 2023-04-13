@@ -76,55 +76,90 @@ class Utils
         ];
     }
 
-    public static function writeLog($msg, $fileName = 'dev.log', $sourceRequest = '')
+    /**
+     * 普通日志记录
+     * @param $msg
+     * @param string $fileName
+     * @param string $sourceRequest
+     */
+    public static function writeLog($msg, $fileName = 'dev.log', $request = '')
     {
         $msg = ['data' => $msg, 'time' => date('Y-m-d H:i:s')];
-        $msg = stripslashes(json_encode($msg, JSON_UNESCAPED_UNICODE));
+        $msg = stripslashes(json_encode($msg, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES));
+        self::mkdirs(Config::info('LOG_PATH'));
         $path = Config::info('LOG_PATH') . $fileName;
         if (!file_exists($path)) {
             file_put_contents($path, PHP_EOL, FILE_APPEND);
         }
         file_put_contents($path, $msg . PHP_EOL, FILE_APPEND);
-        if (!empty($sourceRequest)) {
+        if (!empty($request)) {
+            $sourceRequest['data'] = $request;
+            $sourceRequest['master'] = $master;
             self::retryAdd($sourceRequest);
         }
     }
 
-    public static function asyncErrorLog($msg, $master, $sourceRequest = '')
+    /**
+     * 回调失败日志记录
+     * @param $msg
+     * @param $master
+     * @param string $request 回调的原参数 有则表示需要重试
+     */
+    public static function asyncErrorLog($msg, $master, $request = '')
     {
-        if (!empty($sourceRequest)) {
-            $msg = ['data' => array_merge(['retry' => '已进入重试'], $msg), 'time' => date('Y-m-d H:i:s')];
+        if (!empty($request)) {
+            $msg = ['data' => array_merge(['retry' => '已进入重试'], ['msg' => $msg]), 'time' => date('Y-m-d H:i:s')];
         } else {
             $msg = ['data' => $msg, 'time' => date('Y-m-d H:i:s')];
         }
         $msg = stripslashes(json_encode($msg, JSON_UNESCAPED_UNICODE));
-
-        $path = Config::info('LOG_PATH') . 'error/' . $master . '.log';
+        $dir = Config::info('LOG_PATH') . 'error/';
+        self::mkdirs($dir);
+        $path = $dir . $master . '.log';
         if (!file_exists($path)) {
             file_put_contents($path, PHP_EOL, FILE_APPEND);
         }
         file_put_contents($path, $msg . PHP_EOL, FILE_APPEND);
-        if (!empty($sourceRequest)) {
+        if (!empty($request)) {
+            $sourceRequest['data'] = $request;
+            $sourceRequest['master'] = $master;
             self::retryAdd($sourceRequest);
         }
     }
 
-    public static function asyncSuccessLog($msg, $master, $sourceRequest = '')
+    /**
+     * 回调成功日志记录
+     * @param $msg
+     * @param $master
+     * @param string $request 回调的原参数 有则表示需要重试
+     */
+    public static function asyncSuccessLog($msg, $master, $request = '')
     {
-        if (!empty($sourceRequest)) {
-            $msg = ['data' => array_merge(['retry' => '已进入重试'], $msg), 'time' => date('Y-m-d H:i:s')];
+        if (!empty($request)) {
+            $msg = ['data' => array_merge(['retry' => '已进入重试'], ['msg' => $msg]), 'time' => date('Y-m-d H:i:s')];
         } else {
             $msg = ['data' => $msg, 'time' => date('Y-m-d H:i:s')];
         }
         $msg = stripslashes(json_encode($msg, JSON_UNESCAPED_UNICODE));
-        $path = Config::info('LOG_PATH') . 'success/' . $master . '.log';
+        $dir = Config::info('LOG_PATH') . 'success/';
+        self::mkdirs($dir);
+        $path = $dir . $master . '.log';
         if (!file_exists($path)) {
             file_put_contents($path, PHP_EOL, FILE_APPEND);
         }
         file_put_contents($path, $msg . PHP_EOL, FILE_APPEND);
-        if (!empty($sourceRequest)) {
+        if (!empty($request)) {
+            $sourceRequest['data'] = $request;
+            $sourceRequest['master'] = $master;
             self::retryAdd($sourceRequest);
         }
+    }
+
+    public static function mkdirs($dir, $mode = 0777)
+    {
+        if (is_dir($dir) || @mkdir($dir, $mode)) return TRUE;
+        if (!mkdirs(dirname($dir), $mode)) return FALSE;
+        return @mkdir($dir, $mode);
     }
 
     /**
@@ -226,9 +261,9 @@ class Utils
     }
 
 
-    public static function showLog($fileName, $title)
+    public static function showLog($fileName, $title, $format = 1)
     {
-        $name = '系统错误日志';
+        $name = '系统日志';
         $num = $_GET['num'] ?? 1500;
         $refresh = $_GET['r'] ?? 0;
         $isArr = $_GET['arr'] ?? 0;
@@ -237,21 +272,34 @@ class Utils
             exit('没有找到  ' . $fileName . ' 这个文件，请检查路径是否正确');
         }
 
-        $res = self::fileLastLines($fileName, $num);
         echo '<div style="color: #009900;background-color: black;">';
         echo "<h2 style='color: wheat'>【" . $name . "】{$title}（只展示最后{$num}个字符）更多请&nbsp;↑  &nbsp;&nbsp;url后加&num=100000 | 自动2秒刷新加： &r=2</h2>";
+
         if ($refresh) {
             echo '<meta http-equiv="refresh" content="' . $refresh . '">';
         }
-        $arr = array_filter(explode(PHP_EOL, $res));
-        $result = $dataNew = [];
-        foreach ($arr as $key => $item) {
-            $result[] = json_decode($item, true);
+        $res = self::fileLastLines($fileName, $num);
+        if ($format) {
+            $arr = array_filter(explode(PHP_EOL, $res));
+            $result = $dataNew = [];
+            foreach ($arr as $key => $item) {
+                $result[] = json_decode($item, true);
+            }
+            echo '<pre>';
+            print_r($result);
+            echo '</div>';
+            exit;
+        } else {
+            $arr = array_reverse(explode(PHP_EOL, $res));
+            $result = '';
+            foreach ($arr as $key => $item) {
+                $result .= $item . PHP_EOL;
+            }
+            echo '<pre>';
+            print_r($result);
+            echo '</div>';
+            exit;
         }
-        echo '<pre>';
-        print_r($result);
-        echo '</div>';
-        exit;
     }
 
     public static function cleanHtml($string)

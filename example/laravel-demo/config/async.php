@@ -1,10 +1,10 @@
 <?php
 return [
-    'JSON_DATABASE_PATH' => './asyncJsonDb.json',    //服务信息存储文件地址
+    'JSON_DATABASE_PATH' => config_path() . '/asyncJsonDb.json',         //服务信息存储文件地址
     'LOG_STORAGE_MODE' => 'file',                    //存储模式 暂时支持 file   TODO 后续加上其他存储支持
-    'LOG_PATH' => __DIR__ . '/log/',                 //日志存储目录
-    'BASE_PATH' => __DIR__ . '/',                    //代码根目录
-    'CONFIG_PATH' => __DIR__ . '/config/',           //服务配置文件目录
+    'BASE_PATH' => base_path() . '/',                //代码根目录
+    'LOG_PATH' => storage_path() . '/logs/async/',   //日志存储目录
+    'CONFIG_PATH' => config_path() . '/async/',      //服务配置文件目录
     'RETRY_INFO' => [                                //重试 redis信息存储地址 【启用重试机制时必填】
         'redis' => [
             'host' => '192.168.71.244',              //redis服务地址
@@ -32,11 +32,8 @@ return [
 
     'SMC_ACTION_PHP_ENV' => (PHP_OS == "Linux" ? '/usr/local/php/bin/php' : 'php'),  //php 运行的环境 【linux环境部署时必填】
 
-    //命令行启动监听进程
-    'SMC_ACTION_PHP_ENV_START' => (PHP_OS == "Linux" ? '/usr/local/php/bin/php async.php run' : 'php async.php run'),  //php 运行的环境 【linux环境部署时必填】
-
-    //Laravel 启动命令
-    // 'SMC_ACTION_PHP_ENV_START' => (PHP_OS == "Linux" ? '/usr/local/php/bin/php artisan async-action' : 'php artisan async-action'),
+    //Laravel 启动监听进程命令
+    'SMC_ACTION_PHP_ENV_START' => (PHP_OS == "Linux" ? '/usr/local/php/bin/php artisan async-action' : 'php artisan async-action'),
 
     /****************************TCC分布式配置  不使用可以忽略以下配置 ************************************************/
     'TCC_INFO' => [                   //TCC分布式事务redis存储信息地址 【启用TCC时必填】

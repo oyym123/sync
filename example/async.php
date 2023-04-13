@@ -17,7 +17,6 @@ class Index
     {
         //入口函数需要设定 这个文件的绝对路径
         putenv("CONFIG_FILE_PATH=" . __DIR__ . '/config.php');   //日志文件地址
-
         $this->func = $argv[1] ?? '';    //方法名称
         $this->avg1 = $argv[2] ?? '';    //第一个参数
         $this->avg2 = $argv[3] ?? '';    //第二个参数
@@ -30,24 +29,25 @@ class Index
     {
         $func = $this->func;
         if (empty($func)) {
-            (new Route())->renderView();
+            (new Route())->renderView(0);
         } else {
             $this->$func();
         }
     }
 
     /**
-     * 开启任务
-     * php index.php  start smc_QUEUE_PRODUCT_OVERSEA_STOCK start
+     * 设置任务状态
+     * php async.php run QUEUE_DCM_TCC start
+     * php async.php run QUEUE_DCM_TCC stop
      */
-    public function start()
+    public function run()
     {
         (new Start())->run($this->avg1, $this->avg2);
     }
 
     /**
      * 任务重试
-     * php index.php  retryTask
+     * php async.php  retryTask
      */
     public function retryTask()
     {
@@ -56,7 +56,7 @@ class Index
 
     /**
      * 日志任务
-     * php index.php  logTask 123
+     * php async.php  logTask 123
      */
     public function logTask()
     {
@@ -83,7 +83,7 @@ class Index
 
     /**
      * Tcc测试回调
-     * php index.php  callbackTask 参数1
+     * php async.php  callbackTask 参数1
      */
     public function callbackTask()
     {
@@ -92,7 +92,7 @@ class Index
 
     /**
      * 测试cli执行
-     * php index.php  callbackTest
+     * php async.php  callbackTest
      */
     public function callbackTest()
     {
@@ -101,7 +101,7 @@ class Index
 
     /**
      * 测试cli执行
-     * php index.php  setTest
+     * php async.php  setTest
      */
     public function setTest()
     {
@@ -110,11 +110,20 @@ class Index
 
     /**
      * 测试Http执行
-     * php index.php  setTestHttp
+     * php async.php  setTestHttp
      */
     public function setTestHttp()
     {
         (new Test())->setTestHttp();
+    }
+
+    /**
+     * mq消息推送
+     * php async.php  sendMq
+     */
+    public function sendMq()
+    {
+        (new Test())->sendMq();
     }
 }
 

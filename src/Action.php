@@ -2,8 +2,10 @@
 
 namespace AsyncCenter;
 
+use AsyncCenter\Library\AmqpLib;
 use AsyncCenter\Library\RedisLib;
 use AsyncCenter\Service\RetryType;
+use AsyncCenter\Service\TemplateConfig;
 use AsyncCenter\Service\Utils;
 
 /**
@@ -175,9 +177,15 @@ class Action
 
         $saveData = json_encode($saveData, JSON_PRETTY_PRINT + JSON_UNESCAPED_UNICODE);
         file_put_contents(Config::info('JSON_DATABASE_PATH'), str_replace('\/', '/', $saveData));
+
+        //生成具体配置文件
         $this->createConfig($id);
+
+        //根据配置创建队列
+        AmqpLib::setMqInfo($this->getOne($id));
+
         $redis->del($lockKey);
-        Header("Location: /");
+        Header("Location: /async");
     }
 
     /**
@@ -265,7 +273,7 @@ class Action
     public function createConfig($id)
     {
         $data = $this->getOne($id);
-        $template = file_get_contents("config/template_config.log");
+        $template = TemplateConfig::config();
 
         foreach ($data as $key => $datum) {
             if ($key == 'call_back_func') {
@@ -281,9 +289,9 @@ class Action
             }
             $template = str_replace('$' . $key, $datum, $template);
         }
-        file_put_contents("config/smc_" . $data['mq_master_name'] . '.php', $template);
+        $template = str_replace("'logPath' => '", "'logPath' => '" . Config::info('LOG_PATH') . 'listen/', $template);
+        file_put_contents(Config::info('CONFIG_PATH') . "/smc_" . $data['mq_master_name'] . '.php', $template);
     }
-
 
     public function update()
     {
@@ -312,39 +320,40 @@ class Action
 
     public function smcAction()
     {
-        $fileName = 'smc_' . $this->getOne()['mq_master_name'];
+        $fileName = $this->getOne()['mq_master_name'];
+        $cmdPath = 'cd ' . Config::info('BASE_PATH') . ' && ';
 
         //启动
         if ($_GET['action'] == 'start') {
-            $exec = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' start  >> log/SMC_ACTION.log';
+            $exec = $cmdPath . Config::info('SMC_ACTION_PHP_ENV_START') . ' ' . $fileName . ' start  >> ' . Config::info('LOG_PATH') . 'SMC_ACTION.log';
             system($exec);
-            Utils::writeLog($fileName . ' 启动操作', 'SMC_ACTION.log');
+            Utils::writeLog(PHP_EOL . $exec . ' 启动操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 1], $_GET['id']);
         }
 
         //禁用
         if ($_GET['action'] == 'stop') {
-            $exec = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' stop  >> log/SMC_ACTION.log';
+            $exec = $cmdPath . Config::info('SMC_ACTION_PHP_ENV_START') . ' ' . $fileName . ' stop  >> ' . Config::info('LOG_PATH') . 'SMC_ACTION.log';
             system($exec);
-            Utils::writeLog($fileName . ' 暂停操作', 'SMC_ACTION.log');
+            Utils::writeLog(PHP_EOL . $exec . ' 暂停操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 0], $_GET['id']);
         }
 
         //重启
         if ($_GET['action'] == 'restart') {
-            $exec1 = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' stop  >> log/SMC_ACTION.log';
-            $exec2 = Config::info('SMC_ACTION_PHP_ENV') . ' index.php start ' . $fileName . ' start  >> log/SMC_ACTION.log';
+            $exec1 = $cmdPath . Config::info('SMC_ACTION_PHP_ENV_START') . ' ' . $fileName . ' stop  >> ' . Config::info('LOG_PATH') . 'SMC_ACTION.log';
+            $exec2 = $cmdPath . Config::info('SMC_ACTION_PHP_ENV_START') . ' ' . $fileName . ' start  >> ' . Config::info('LOG_PATH') . 'SMC_ACTION.log';
             system($exec1);
             sleep(2);
             system($exec2);
-            Utils::writeLog($fileName . ' 重启操作', 'SMC_ACTION.log');
+            Utils::writeLog(PHP_EOL . $exec1 . PHP_EOL . $exec2 . ' 重启操作', 'SMC_ACTION.log');
             $this->writeSave(['status' => 1], $_GET['id']);
         }
     }
 
     public function systemRetryLog()
     {
-        Utils::showLog('log/RETRY.log', '重试日志');
+        Utils::showLog(Config::info('LOG_PATH') . '/RETRY.log', '重试日志');
     }
 
     public function tccLog()
@@ -354,19 +363,19 @@ class Action
 
     public function smcActionLog()
     {
-        Utils::showLog('log/SMC_ACTION.log', '操作日志');
+        Utils::showLog(Config::info('LOG_PATH') . '/SMC_ACTION.log', '操作日志', 0);
     }
 
     public function systemErrorLog()
     {
-        Utils::showLog('log/ERROR.log', '回调错误日志');
+        Utils::showLog(Config::info('LOG_PATH') . '/ERROR.log', '回调错误日志');
     }
 
     public function listenLog()
     {
         $info = $this->getOne();
-        $fileName = 'log/listen/' . $info['mq_master_name'] . '/smc-server.log';
-        Utils::showLog($fileName, '监听日志');
+        $fileName = Config::info('LOG_PATH') . '/listen/' . $info['mq_master_name'] . '/smc-server.log';
+        Utils::showLog($fileName, '监听日志', 0);
     }
 
     public function runLog()
@@ -393,10 +402,9 @@ class Action
             $dir = 'retry';
         }
 
-        $fileName = 'log/' . $dir . '/' . $info['mq_master_name'] . '.log';
-
+        $fileName = Config::info('LOG_PATH') . $dir . '/' . $info['mq_master_name'] . '.log';
         if (!file_exists($fileName)) {
-            exit("没有找到该文件");
+            exit("暂无数据！");
         }
 
         $title = '<b style="color: orange">' . $title . '</b>';

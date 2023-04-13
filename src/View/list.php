@@ -26,7 +26,7 @@ use AsyncCenter\Library\RedisLib;
         </div>
         <ul class="sidebar-list">
             <li class="sidebar-list-item">
-                <a href="#">
+                <a href="/async<?= $beautyRoute ?? '' ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                          class="feather feather-home">
@@ -94,7 +94,7 @@ use AsyncCenter\Library\RedisLib;
     <div class="app-content">
         <div>
             <h1 class="app-content-headerText"><?= $title ?? '' ?> </h1>
-            <div class="app-content-header" style="right: 50%;position: relative;">
+            <div class="app-content-header" style="right: 40%;position: relative;">
                 <button class="mode-switch" title="Switch Theme">
                     <svg class="moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                          stroke-width="2" width="24" height="24" viewbox="0 0 24 24">
@@ -102,7 +102,8 @@ use AsyncCenter\Library\RedisLib;
                         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
                     </svg>
                 </button>
-                <a href="../action?action=add" target="_blank">
+                <a href="../async<?= $beautyRoute ?? '' ?>?action=add&view=list&beautyRoute=<?= $beautyRoute ?? '' ?>"
+                   target="_blank">
                     <button class="app-content-headerButton">新增配置</button>
                 </a>
             </div>
@@ -121,13 +122,12 @@ use AsyncCenter\Library\RedisLib;
                        style="color: green;width: 8rem;background-color: rgb(16,24,39)">&nbsp;&nbsp;
                 <button class="search-submit app-content-headerButton" style="width: 6%;">点击搜索</button>
             </label>
-            <div class="app-content-actions" style="right: 50%;position: relative;">
+            <div class="app-content-actions" style="right: 40%;position: relative;">
                 <div class="app-content-actions-wrapper">
                     <div class="filter-button-wrapper">
                         <button class="action-button filter jsFilter">
                         </button>
                     </div>
-
                     <button id="list_view" class="action-button list active" title="List View">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -140,7 +140,6 @@ use AsyncCenter\Library\RedisLib;
                             <line x1="3" y1="18" x2="3.01" y2="18"></line>
                         </svg>
                     </button>
-
                     <button id="grid_view" class="action-button grid" title="Grid View">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -161,7 +160,7 @@ use AsyncCenter\Library\RedisLib;
                     <?php
                     $title = [
                         '序号' => 1.8,
-                        '状态' => 1,
+                        '状态' => 1.5,
                         '任务名称' => 5.7,
                         '执行数量' => 2.5,
                         '监听日志' => 2.3,
@@ -309,7 +308,8 @@ use AsyncCenter\Library\RedisLib;
                 <div class="product-cell" style="width: 5%"><span
                             class="cell-label">  创建时间:</span><?= $datum['created_at'] ?? '' ?> </div>
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作1:</span>
-                    <a href="../action?action=update&id=<?= $datum['id'] ?>" target="_blank">
+                    <a href="../async<?= $beautyRoute ?? '' ?>?action=update&id=<?= $datum['id'] ?>&beautyRoute=<?= $beautyRoute ?? '' ?>"
+                       target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: royalblue;width: 3.8rem;">修改
                         </button>
@@ -317,7 +317,7 @@ use AsyncCenter\Library\RedisLib;
                 </div>
 
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作2:</span>
-                    <a href="../action?id=<?= $datum['id'] ?>&action=restart" target="_blank">
+                    <a href="../async<?= $beautyRoute ?? '' ?>?id=<?= $datum['id'] ?>&action=restart" target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: orange;width: 3.8rem;">重启
                         </button>
@@ -325,7 +325,7 @@ use AsyncCenter\Library\RedisLib;
                 </div>
 
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作3:</span>
-                    <a href="../action?id=<?= $datum['id'] ?>&action=start" target="_blank">
+                    <a href="../async<?= $beautyRoute ?? '' ?>?id=<?= $datum['id'] ?>&action=start" target="_blank">
                         <button type="button" class="app-content-headerButton"
                                 style="background-color: green;width: 3.8rem;">
                             启动
@@ -333,7 +333,7 @@ use AsyncCenter\Library\RedisLib;
                     </a>
                 </div>
                 <div class="product-cell" style="width: 2%"><span class="cell-label">  操作4:</span>
-                    <a href="../action?id=<?= $datum['id'] ?>&action=stop" target="_blank">
+                    <a href="../async<?= $beautyRoute ?? '' ?>?id=<?= $datum['id'] ?>&action=stop" target="_blank">
                         <button class="app-content-headerButton"
                                 style="background-color: red;width: 3.8rem;">
                             暂停
@@ -359,7 +359,6 @@ use AsyncCenter\Library\RedisLib;
             </div>
             <?php
             } ?>
-
         </div>
     </div>
     <script src="../static/js/script.js"></script>
@@ -369,18 +368,18 @@ use AsyncCenter\Library\RedisLib;
         $('.search-bar').bind('keyup', function (event) {
             if (event.keyCode == "13") {
                 //回车执行查询
-                window.location.href = "/list?keywords=" + $("input[name='search']").val()
+                window.location.href = "/async<?= $beautyRoute ?? '' ?>?keywords=" + $("input[name='search']").val()
                     + "&date_start=" + $("input[name='date_start']").val()
-                    + "&date_end=" + $("input[name='date_end']").val()
+                    + "&date_end=" + $("input[name='date_end']").val() + '&view=list'
                 ;
             }
         });
 
         //点击绑定时间
         $('.search-submit').click('keyup', function (event) {
-            window.location.href = "/list?keywords=" + $("input[name='search']").val()
+            window.location.href = "/async<?= $beautyRoute ?? '' ?>?keywords=" + $("input[name='search']").val()
                 + "&date_start=" + $("input[name='date_start']").val()
-                + "&date_end=" + $("input[name='date_end']").val()
+                + "&date_end=" + $("input[name='date_end']").val() + '&view=list'
             ;
         });
 

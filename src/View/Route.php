@@ -6,17 +6,17 @@ use AsyncCenter\Index;
 
 class Route
 {
-    public function renderView()
+    public function renderView($isBeautyUrl = 0)
     {
-        preg_match('/\/(.*)?\?/', $_SERVER['REQUEST_URI'], $match);
-        $view = $_SERVER['REQUEST_URI'] === '/' ? 'list' : $match[1] ?? 0;
+        $view = ($_GET['view'] ?? '') ?: 'list';
+        $beautyRoute = $isBeautyUrl === 0 ? '.php' : '';
         switch ($view) {
             case 'add':
-                include_once 'add.php';
+                require_once 'add.php';
                 break;
             case 'list':
                 if (isset($_GET['action'])) {
-                    include_once __DIR__ . '/../action.php';
+                    require_once __DIR__ . '/../Action.php';
                 } else {
                     if (!isset($_GET['date_start'])) {
                         $_GET['date_start'] = date('Y-m-d', strtotime("-1 day"));
@@ -26,10 +26,10 @@ class Route
                 }
                 break;
             case 'tccView':
-                include_once 'tccView.php';
+                require_once 'tccView.php';
                 break;
             case 'update':
-                include_once 'update.php';
+                require_once 'update.php';
                 break;
             case 'tccTest':
                 (new Index())->tccTest();
@@ -38,7 +38,7 @@ class Route
                 (new Index())->tcc();
                 break;
             default :
-                include_once __DIR__ . '/../action.php';
+                require_once __DIR__ . '/../Action.php';
                 break;
 
         }
