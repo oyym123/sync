@@ -68,4 +68,7 @@ Laravel集成
            
            即可以在界面上看到对应的回调日志
 
+界面展示
+![image](https://user-images.githubusercontent.com/20701868/232002756-3e2f7b21-8f41-4b1c-96dc-2c5a4ae547bc.png)
+
 
