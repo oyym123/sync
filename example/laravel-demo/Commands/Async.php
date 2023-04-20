@@ -4,8 +4,9 @@ namespace App\Console\Commands;
 
 use AsyncCenter\Library\AmqpLib;
 use AsyncCenter\Service\Utils;
+use Illuminate\Console\Command;
 
-class Async extends AsyncAction
+class Async extends Command
 {
     const MASTER_NAME = 'QUEUE_DCM_TCC';  //唯一主任务名称 需跟界面上配置一致
 
@@ -30,6 +31,8 @@ class Async extends AsyncAction
      */
     public function __construct()
     {
+        //入口函数需要设定 这个文件的绝对路径
+        putenv("CONFIG_FILE_PATH=" . config_path() . '/async.php');          //日志文件地址
         parent::__construct();
     }
 

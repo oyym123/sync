@@ -93,9 +93,9 @@ class Utils
         }
         file_put_contents($path, $msg . PHP_EOL, FILE_APPEND);
         if (!empty($request)) {
-            $sourceRequest['data'] = $request;
-            $sourceRequest['master'] = $master;
-            self::retryAdd($sourceRequest);
+//            $sourceRequest['data'] = $request;
+//            $sourceRequest['master'] = $master;
+//            self::retryAdd($sourceRequest);
         }
     }
 
@@ -264,7 +264,7 @@ class Utils
     public static function showLog($fileName, $title, $format = 1)
     {
         $name = '系统日志';
-        $num = $_GET['num'] ?? 1500;
+        $num = $_GET['num'] ?? 30;
         $refresh = $_GET['r'] ?? 0;
         $isArr = $_GET['arr'] ?? 0;
         $title = '<b style="color: #ffa500"> ' . $title . '</b>';

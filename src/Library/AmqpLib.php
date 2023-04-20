@@ -129,6 +129,7 @@ class AmqpLib
     {
         $exchangeName = $exchangeName ?: ($config['mq_exchange'] ?? '');
         $queueName = $queueName ?: ($config['route_key'] ?? '');
+        $type = ($config['exchange_type'] ?? '') ?: $type;
         try {
             $ampq = AmqpLib::getInstanceNew($config);
             $channel = new \AMQPChannel($ampq::$ampqConnection);

@@ -72,6 +72,7 @@
             <input class="input-bar" placeholder="" name="mq_exchange" type="text">
             <br/>
             <br/>
+
             <span> <span style="color: red;"> * </span>队列名称：</span>
             <input class="input-bar" placeholder="" name="queue_name" type="text">
             <br/>
@@ -87,12 +88,22 @@
                    type="text">
             <br/>
             <br/>
-
             <h5 style="color: cornsilk">以下皆为默认配置 - 可自行修改</h5>
             <hr style="width: 37%;position: relative;right: 30%">
 
             <div class="filter-button-wrapper" style="right: 35%;bottom: 30%;">
                 <div class="filter-menu active">
+                    <label style="color: greenyellow">交换机模式 默认 direct</label>
+                    <select name="exchange_type">
+                        <?php
+                        foreach ($action->getExchangeType() as $k => $value) {
+                            if ($k == 1) {
+                                echo '<option selected value="' . $k . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $k . '">' . $value . '</option>';
+                            }
+                        } ?>
+                    </select>
                     <label style="color: greenyellow">最小进程数</label>
                     <select name="min_consumer">
                         <?php for ($i = 1; $i <= 20; $i++) {
@@ -178,16 +189,19 @@
 
             <br/>
             <span> mq_host：</span>
-            <input class="input-bar" placeholder="" name="mq_host" value="<?= $mqConfig['mq_host'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_host" value="<?= $mqConfig['mq_host'] ?? '' ?>"
+                   type="text">
             <br/>
             <br/>
             <span> mq_vhost：</span>
-            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['mq_vhost'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_vhost" value="<?= $mqConfig['mq_vhost'] ?? '' ?>"
+                   type="text">
             <br/>
             <br/>
 
             <span> mq_user：</span>
-            <input class="input-bar" placeholder="" name="mq_user" value="<?= $mqConfig['mq_user'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_user" value="<?= $mqConfig['mq_user'] ?? '' ?>"
+                   type="text">
             <br/>
             <br/>
             <span> mq_pass：</span>
@@ -196,7 +210,8 @@
             <br/>
             <br/>
             <span> mq_port：</span>
-            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['mq_port'] ?? '' ?>" type="text">
+            <input class="input-bar" placeholder="" name="mq_port" value="<?= $mqConfig['mq_port'] ?? '' ?>"
+                   type="text">
             <br/>
             <br/>
             <span> prefetchCount：</span>

@@ -82,13 +82,13 @@ class Smc
     {
         $config = self::getConfig()['connection'];
         switch ($driverFlag) {
-            case SMC_AMQP_CONSUME:
+            case 1:
                 if (isset($queueConf['vhost'])) {
                     $config['vhost'] = $queueConf['vhost'];
                 }
 
                 return new AmqpDriver($config);
-            case SMC_REDIS_CONSUME:
+            case 2:
                 return new RedisDriver($config);
             default:
                 throw new \Exception('Unknow Driver');

@@ -204,7 +204,7 @@ use AsyncCenter\Library\RedisLib;
 
                 $datum['nums'] = 0;
                 if (isset($_GET['date_start']) && !empty($_GET['date_start']) && !empty($_GET['date_end'])) {
-                    $datum['nums'] = \AsyncCenter\Service\Utils::numsCount($datum['mq_master_name'], $_GET['date_start'], $_GET['date_end']);
+                    $datum['nums'] = \AsyncCenter\Service\Utils::numsCount($datum['mq_master_name'].'.log', $_GET['date_start'], $_GET['date_end']);
                 }
 
                 $funcArr = explode('/', $datum['call_back_func']);

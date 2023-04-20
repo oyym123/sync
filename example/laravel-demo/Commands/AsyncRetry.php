@@ -2,30 +2,27 @@
 
 namespace App\Console\Commands;
 
-use AsyncCenter\Library\AmqpLib;
+use AsyncCenter\RetryTask;
 use Illuminate\Console\Command;
 
-class AsyncTest extends Command
+class AsyncRetry extends Command
 {
-    const MASTER_NAME = 'QUEUE_DCM_TCC';  //唯一主任务名称 需跟界面上配置一致
-
     /**
      * The name and signature of the console command.
-     * php artisan async-test 测试数据
+     * php artisan async-retry
      * @var string
      */
-    protected $signature = 'async-test {param=""}';
+    protected $signature = 'async-retry';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '异步测试demo 往测试mq中添加数据';
+    protected $description = '异步处理中心 添加每分钟任务重试 需要在crontab中加入 * * * * *  cd  /根目录 &&  php artisan async-retry';
 
     /**
      * Create a new command instance.
-     *
      * @return void
      */
     public function __construct()
@@ -40,12 +37,6 @@ class AsyncTest extends Command
      */
     public function handle()
     {
-        $msg = $this->argument('param');
-
-        //消息推送到队列
-        AmqpLib::sendMsg('MQ_EXCHANGE_DCM_TCC', 'dcm_tcc_test', $msg);
-
-        //广播消息
-        AmqpLib::sendMsgFanout('MQ_EXCHANGE_DCM_TCC', $msg);
+        (new RetryTask())->start();
     }
 }

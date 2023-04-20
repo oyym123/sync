@@ -91,8 +91,19 @@
             <span>  prefetchCount：</span>
             <input class="input-bar" value="<?= $info['prefetch_count'] ?>" name="prefetch_count" type="text">
             <br/>
-            <div class="filter-button-wrapper" style="right: 38%;bottom: 32%;">
+            <div class="filter-button-wrapper" style="right: 38%;bottom: 38%;">
                 <div class="filter-menu active">
+                    <label style="color: greenyellow">交换机模式 默认 direct</label>
+                    <select name="exchange_type">
+                        <?php
+                        foreach ($action->getExchangeType() as $k => $value) {
+                            if ($k == $info['exchange_type']) {
+                                echo '<option selected value="' . $k . '">' . $value . '</option>';
+                            } else {
+                                echo '<option value="' . $k . '">' . $value . '</option>';
+                            }
+                        } ?>
+                    </select>
                     <label style="color: greenyellow">最小进程数</label>
                     <select name="min_consumer">
                         <?php for ($i = 1; $i <= 20; $i++) {

@@ -67,6 +67,7 @@ class BaseApplication
                     $redis->lPush('ARGUMENTS_' . $jobArray['master_process_name'], $oldInfo);
                     $jobArray['msg'] = 'deal-by-queue-argument';
                 }
+
                 //写入执行日志中
                 $setRequest = Config::info('SMC_ACTION_PHP_ENV') . ' ' . $jobArray['command'] . " " . $jobArray['msg'] . " " . $argumentStr;
                 system($setRequest);
@@ -83,7 +84,7 @@ class BaseApplication
             if ($jobArray['isCount'] == Action::IS_COUNT_YES) {
                 //统计数据
                 $redis = RedisLib::getInstance(Config::info('REDIS_CONFIG'), false);
-                $redis->incr($masterName . '_' . date('Y-m-d'));
+                $redis->incr($jobArray['master_process_name'] . '_' . date('Y-m-d'));
             }
 
             if ($jobArray['logFlag'] == Action::CALLBACK_LOG_YES) {

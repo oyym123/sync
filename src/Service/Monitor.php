@@ -45,7 +45,7 @@ class Monitor
         $msgCount = 0;
         $status   = false;
         try {
-            $consumer = new Consumer(Smc::selectDriver($queueConf, SMC_MESSAGE_DRIVER));
+            $consumer = new Consumer(Smc::selectDriver($queueConf, 1));
             $msgCount = $consumer->getMessageCount($queueConf['queueName']);
             $status   = $this->triggerOverStock($msgCount, $queueConf);
         } catch (\AMQPConnectionException $e) {

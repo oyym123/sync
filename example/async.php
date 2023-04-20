@@ -5,7 +5,7 @@ require "../vendor/autoload.php";
 
 use AsyncCenter\Service\Test;
 use AsyncCenter\Service\Utils;
-use AsyncCenter\view\Route;
+use AsyncCenter\View\Route;
 
 class Index
 {
@@ -29,7 +29,7 @@ class Index
     {
         $func = $this->func;
         if (empty($func)) {
-            (new Route())->renderView(0);
+          (new Route())->renderView(0);
         } else {
             $this->$func();
         }
@@ -47,7 +47,7 @@ class Index
 
     /**
      * 任务重试
-     * php async.php  retryTask
+     * php async.php retryTask
      */
     public function retryTask()
     {

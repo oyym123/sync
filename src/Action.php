@@ -91,6 +91,21 @@ class Action
      * @param string $key
      * @return int|string|string[]
      */
+    public function getExchangeType($key = 'all')
+    {
+        $data = [
+            'direct' => 'direct',
+            'fanout' => 'fanout',
+            'topic' => 'topic',
+            'headers' => 'headers',
+        ];
+        return $key === 'all' ? $data : ($data[$key] ?? self::CALLBACK_LOG_YES);
+    }
+
+    /**
+     * @param string $key
+     * @return int|string|string[]
+     */
     public static function getLogStatus($key = 'all')
     {
         $data = [
@@ -134,8 +149,8 @@ class Action
     public static function getIsArgQueue($key = 'all')
     {
         $data = [
-            self::IS_QUEUE_YES => '使用',
             self::IS_QUEUE_NO => '不使用',
+            self::IS_QUEUE_YES => '使用',
         ];
         return $key === 'all' ? $data : ($data[$key] ?? self::IS_COUNT_YES);
     }
@@ -152,7 +167,7 @@ class Action
         if ($redis->exists($lockKey)) {
             exit("有其他用户正在操作，请重试！");
         }
-        $redis->set($lockKey, 1);
+        $redis->setex($lockKey, 2, 1);
         $info = $this->allInfo();
         if ($id) { //更新
             $saveData = [];
@@ -168,7 +183,7 @@ class Action
         } else {
             $data['status'] = 0;
             //获取最后一位id
-            $data['id'] = array_pop($info)['id'] + 1;
+            $data['id'] = end($info)['id'] + 1;
             $data['updated_at'] = date('Y-m-d H:i:s');
             $data['created_at'] = date('Y-m-d H:i:s');
             $saveData = array_merge($info, [$data]);
@@ -185,7 +200,7 @@ class Action
         AmqpLib::setMqInfo($this->getOne($id));
 
         $redis->del($lockKey);
-        Header("Location: /async");
+        Header("Location: /async.php");
     }
 
     /**
@@ -290,6 +305,7 @@ class Action
             $template = str_replace('$' . $key, $datum, $template);
         }
         $template = str_replace("'logPath' => '", "'logPath' => '" . Config::info('LOG_PATH') . 'listen/', $template);
+        Utils::mkdirs(Config::info('CONFIG_PATH'));
         file_put_contents(Config::info('CONFIG_PATH') . "/smc_" . $data['mq_master_name'] . '.php', $template);
     }
 
@@ -414,10 +430,12 @@ class Action
         $arr = array_filter(explode(PHP_EOL, $res));
         $res = [];
         $keywordsInfo = [];
+
+
         foreach ($arr as $key => $item) {
+            $item = str_replace(['n    ', '"n}"', ':"{"'], ['', '"}', ':{"'], $item);
             $data = json_decode($item, true);
             $data['data'] = $isArr ? $data['data'] : (json_encode($data['data'], JSON_UNESCAPED_UNICODE) ?: $data['data']);
-
             if (!empty($keywords)) {
                 if (strpos($item, $keywords) !== false) {
                     $keywordsInfo[] = $data['data'];

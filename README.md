@@ -67,5 +67,8 @@ Laravel集成
            php artisan async-test content
            
            即可以在界面上看到对应的回调日志
+           
+           如果需开启重试机制 需要加上定时任务
+           * * * * *  cd /代码根目录 &&  php artisan async-retry
 
 
