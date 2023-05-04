@@ -1,7 +1,7 @@
 [
     {
         "name": "【测试】demo1",
-        "mq_master_name": "QUEUE_PRODUCT_OVERSEA_STOCK",
+        "mq_master_name": "QUEUE_DCM_TCC",
         "mq_exchange": "dcm_product_exchange2",
         "queue_name": "dcm_warehouse_update2",
         "route_key": "dcm_warehouse_update2",

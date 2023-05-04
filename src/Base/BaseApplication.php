@@ -28,7 +28,12 @@ class BaseApplication
             $masterName = $jobArray['master_process_name'] . '.log';
         }
         $infoData = Utils::isJson($jobArray['msg']);
-        $oldInfo = $infoData ? json_encode($infoData, JSON_PRETTY_PRINT) : $jobArray['msg'];
+        if (isset($jobArray['isQueue']) && $jobArray['isQueue'] == Action::IS_QUEUE_YES) {
+            $oldInfo = $infoData ? json_encode($infoData, JSON_PRETTY_PRINT) : $jobArray['msg'];
+        } else {
+            $oldInfo = $infoData ? json_encode($infoData) : $jobArray['msg'];
+        }
+
         $isExec = 1;
         if (isset($jobArray['cleanRepeat']) && $jobArray['cleanRepeat'] == 1) {
             //布隆过滤器：用于判断是否重复  默认存在 redis database =  3

@@ -398,7 +398,7 @@ class Action
     {
         $info = $this->getOne();
         $name = $info['name'];
-        $num = $_GET['num'] ?? 200;
+        $num = $_GET['num'] ?? 50;
         $isArr = $_GET['arr'] ?? 0;
         $refresh = $_GET['r'] ?? 0;
         $keywords = $_GET['k'] ?? 0;
@@ -426,16 +426,20 @@ class Action
         $title = '<b style="color: orange">' . $title . '</b>';
         $res = Utils::fileLastLines($fileName, $num);
         echo '<div style="color: #009900;background-color: black;">';
-        echo "<h2 style='color: wheat'>【" . $name . "】{$title}（只展示最后{$num}行）更多请&nbsp;↑  &nbsp;&nbsp;url后加&num=100000，字符搜索 加 &k=关键词 ，转换数组 加 &arr=1 | 自动刷新加： &r=1</h2>";
+        echo "<h2 style='color: wheat'>【" . $name . "】{$title}（只展示最后{$num}行）更多请&nbsp;↑  &nbsp;&nbsp;url后加&num=10000，字符搜索 加 &k=关键词 ，转换数组 加 &arr=1 | 自动刷新加： &r=1</h2>";
         $arr = array_filter(explode(PHP_EOL, $res));
         $res = [];
         $keywordsInfo = [];
 
-
         foreach ($arr as $key => $item) {
-            $item = str_replace(['n    ', '"n}"', ':"{"'], ['', '"}', ':{"'], $item);
+            $item = str_replace(['n    ', '"n}"', ':"{"', '"}",', '}","arg1"'], ['', '"}', ':{"', '"},', '},"arg1"'], $item);
             $data = json_decode($item, true);
-            $data['data'] = $isArr ? $data['data'] : (json_encode($data['data'], JSON_UNESCAPED_UNICODE) ?: $data['data']);
+            if (empty($data)) {
+                $data['data'] = $item;
+            } else {
+                $data['data'] = $isArr ? $data['data'] : (json_encode($data['data'], JSON_UNESCAPED_UNICODE) ?: $data['data']);
+            }
+
             if (!empty($keywords)) {
                 if (strpos($item, $keywords) !== false) {
                     $keywordsInfo[] = $data['data'];
