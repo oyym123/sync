@@ -71,4 +71,7 @@ Laravel集成
            如果需开启重试机制 需要加上定时任务
            * * * * *  cd /代码根目录 &&  php artisan async-retry
 
+界面展示
+![image](https://user-images.githubusercontent.com/20701868/232002756-3e2f7b21-8f41-4b1c-96dc-2c5a4ae547bc.png)
+
 
